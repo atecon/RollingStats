@@ -1,0 +1,88 @@
+set echo off
+set messages off
+
+function series RollStat(list x,
+    int selStat[1:7:1] "1=Mean, 2=p-thMedian, 3=SD, \
+    4=Min., 5=Max, 6=Skewn., 7=Correlation",
+    int wsize[1::] "Size of window",
+    scalar pquant "iff selStat=2: choose quantile")
+        
+    if nelem(x)>1 && selStat<7
+        printf "\nNote: Your list of variables includes more, \n\
+          than a single variable such that you can't compute your \n\
+          statistics of interest. In this case only the correlation\n\
+          coefficient can be computed. Re-specify your function.\n"
+        stop
+    elif nelem(x)!=2 && selStat==7
+        printf "The correlation coefficient will only be computed for \n\
+          2 variables including in list x! Please re-specify your list.\n"
+        stop        
+    endif     
+
+    smpl x --no-missing    
+
+    matrix X = {x}
+    scalar T = rows(X)
+    matrix out = zeros(T,1)
+    scalar nsteps = T - wsize + 1
+    loop i=1..nsteps -q
+        xtmp = X[i:wsize+i-1,]
+        if selStat == 1
+            scalar stmp = meanc(xtmp)
+        elif selStat == 2
+            if pquant <0 || pquant>1
+                printf "You need to specify a proper p-th quantile\n"
+                printf "Please re-specify 'pquant'.\n"
+                break
+            endif            
+            scalar stmp = quantile(xtmp,pquant)
+        elif selStat == 3
+            scalar stmp = sdc(xtmp)
+        elif selStat == 4
+            scalar stmp = minc(xtmp)
+        elif selStat == 5
+            scalar stmp = maxc(xtmp)
+        elif selStat == 6
+            matrix m = skew(xtmp)
+            scalar stmp = m[2]
+        elif selStat == 7            
+            matrix m = mcorr(xtmp)
+            scalar stmp = m[1,2]            
+        endif
+        out[i+wsize-1] = stmp
+    endloop
+    series sout = out
+    sout = zeromiss(sout)
+    return sout
+end function
+
+function matrix skew (matrix X)
+    # URL: http://de.mathworks.com/help/stats/skewness.html?requestedDomain=www.mathworks.com 
+    
+    matrix xbar = X.-meanc(X)
+    scalar A = 1/rows(X) .* sumc(xbar.^3)
+    scalar B = ( sqrt(1/rows(X) .* sumc(xbar.^2) )).^3
+    scalar S1 = A/B
+    scalar S0a = sqrt(rows(X)*(rows(X)-1))
+    scalar S0b = rows(X)-2
+    S0 = S0a*S1/S0b				# bias-corrected formula, ==gretl's default
+
+    return S0~S1
+end function
+
+/*
+clear
+open denmark.gdt -q
+gY = ldiff(LRY)
+gM = ldiff(LRM)
+scalar sel = 2 	#"1=Mean, 2=Median, 3=SD, 4=Min., 5=Max, 6=Skewn.", 7=Correlation"
+wsize = 20
+list L1 = gY
+scalar q = 0.5
+gYmean = RollStat(L1, sel, wsize, q)
+gYsd = RollStat(L1, 3, wsize, q)
+list L2 = L1 gM
+gYMcor = RollStat(L2, 7, wsize, q)
+scatters gY gYmean gYsd gM gYMcor --output=display
+
+*/
