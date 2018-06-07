@@ -24,6 +24,7 @@ function series RollStat(list x,
     matrix X = {x}
     scalar T = rows(X)
     matrix out = zeros(T,1)
+    matrix out = (out ? out : NA)
     scalar nsteps = T - wsize + 1
     loop i=1..nsteps -q
         xtmp = X[i:wsize+i-1,]
@@ -52,7 +53,6 @@ function series RollStat(list x,
         out[i+wsize-1] = stmp
     endloop
     series sout = out
-    sout = zeromiss(sout)
     return sout
 end function
 
