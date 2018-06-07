@@ -19,7 +19,7 @@ function series RollStat(list x,
         stop        
     endif     
 
-    smpl x --no-missing    
+    smpl x --no-missing
 
     matrix X = {x}
     scalar T = rows(X)
@@ -32,7 +32,7 @@ function series RollStat(list x,
         elif selStat == 2
             if pquant <0 || pquant>1
                 printf "You need to specify a proper p-th quantile\n"
-                printf "Please re-specify 'pquant'.\n"
+                funcerr "Please re-specify 'pquant'."
                 break
             endif            
             scalar stmp = quantile(xtmp,pquant)
