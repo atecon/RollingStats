@@ -1,0 +1,65 @@
+set verbose off
+
+/*
+function series rollcorrel (list x, (list x,
+                            int selStat[1:7:1] "1=Mean, 2=p-thMedian, 3=SD, \
+                            4=Min., 5=Max, 6=Skewn., 7=Correlation",
+                            int wsize[1::] "Size of window",
+                            scalar pquant[0.01:0.99:] "iff selStat=2: choose quantile")
+
+end function
+*/
+
+
+/*
+   function series rolling (list x,
+   int selStat[1:7:1] "1=Mean, 2=p-thMedian, 3=SD, \
+   4=Min., 5=Max, 6=Skewn., 7=Correlation",
+   int wsize[1::] "Size of window",
+   scalar pquant[0.01:0.99:] "iff selStat=2: choose quantile")
+*/
+function series rolling (series y "Series of interest",
+                         string which "Which statistics? Use gretl built-ins",
+                         int wsize[1::2] "Size of the moving window",
+                         bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
+    
+    # Compute univariate scalar statistics
+    smpl y --no-missing
+    scalar nsteps = nobs(y) - wsize + 1
+    matrix mout = zeros(nsteps,1)	# store results
+    smpl $t1 ($t1+wsize-1)
+    
+    loop i=1..nsteps -q        
+        mout[i] = @which	# call some built-in function
+        if i<nsteps
+            if recursive
+                smpl ; +1
+            else                
+                smpl +1 +1
+            endif            
+        endif        
+    endloop
+    
+    # transform into series
+    smpl y --no-missing --replace
+    smpl ($t1+wsize-1) $t2
+    series S = moutt
+    return S
+end function
+
+
+/*
+function matrix skew (matrix X)
+    # URL: http://de.mathworks.com/help/stats/skewness.html?requestedDomain=www.mathworks.com
+
+    matrix xbar = X.-meanc(X)
+    scalar A = 1/rows(X) .* sumc(xbar.^3)
+    scalar B = ( sqrt(1/rows(X) .* sumc(xbar.^2) )).^3
+    scalar S1 = A/B
+    scalar S0a = sqrt(rows(X)*(rows(X)-1))
+    scalar S0b = rows(X)-2
+    S0 = S0a*S1/S0b				# bias-corrected formula, ==gretl's default
+
+    return S0~S1
+end function
+*/
