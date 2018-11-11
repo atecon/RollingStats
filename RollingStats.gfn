@@ -123,6 +123,8 @@ if nobs(y) != rows(vec(m))
   funcerr &quot;Check whether the current sample is correctly specified.&quot;
 endif
 series S = vec(m)
+setinfo S --description=&quot;rolling_ts() statistics&quot;
+setinfo S --graph-name=&quot;rolling_ts() statistics&quot;
 return S
 </code>
 </gretl-function>

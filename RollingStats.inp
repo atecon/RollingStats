@@ -43,6 +43,8 @@ function series rvec2series (series y "Series of interest",
         funcerr "Check whether the current sample is correctly specified."
     endif    
     series S = vec(m)
+    setinfo S --description="rolling_ts() statistics"
+    setinfo S --graph-name="rolling_ts() statistics"
     return S     
 end function
 
