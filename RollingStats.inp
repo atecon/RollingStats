@@ -13,7 +13,7 @@ function matrix rolling_ts (series y "Series of interest",
     loop i=1..nsteps -q
         m[i] = @which	# call some built-in function
         if i<nsteps
-            if recursive
+            if recursive==1
                 smpl ; +1
             else
                 smpl +1 +1
@@ -46,14 +46,14 @@ function series rvec2series (series y "Series of interest",
     return S     
 end function
 
-function series rolling_ts_gui (series y "Series of interest",
-                            string which "Which statistics? e.g 'mean(y)'",
+function series rolling_ts_gui (series y "Select series of interest (y)",
+                            string which "Compute: e.g 'mean(y)'",
                             int wsize[1::2] "Size of the moving window",
                             bool recursive[0] "Recursive window (default 'rolling')")
     
-    series RollStatsTs = rvec2series(y, rolling_ts(y, which, wsize), wsize)
-    printf "\n Series 'RollStatsTs' computed\n"
-    return RollStatsTs
+    series S = rvec2series(y, rolling_ts(y, which, wsize, recursive), wsize)
+    printf "\n Series computed\n"
+    return S
 end function
 
 /*

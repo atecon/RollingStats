@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-functions>
+<gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2017a">
+<author email="atecon@cryptolab.net">Artur Tarassow</author>
+<version>0.1</version>
+<date>2018-11-11</date>
+<description>Rolling Time-Series Statistics</description>
+<tags>C10</tags>
+<label>Rolling Time-series Stats</label>
+<menu-attachment>MAINWIN/Add</menu-attachment>
+<help>
+===============================
+&quot;RollingStats&quot; -- Gretl package
+===============================
+
+Author: Artur Tarassow
+Email: atecon@cryptolab.net
+
+
+version history
+****************
+0.1: Nov., 2018
+- initial public version
+
+
+Public functions:
+*****************
+rolling_ts(): Rolling Univariate Time-series Statistics
+-------------
++ This function allows the user to compute specific statistics
+in either a 'rolling' (fixed, shifting window through time) or 'recursive'
+(expanding window through time) manner.
++ In principle all -- both built-in as well as user-defined functions (UDF)
+-- can be called which have a scalar value as its outcome.
+
+rvec2series(): Transforms vector into series object
+--------------
++ Transforms the resulting vector from rolling_ts() into a series
+
+
+-----------------
+rolling_ts():
+-----------------
+INPUT:
+series y: 			series which is used for computing some statistics
+string which:		string, put into string a very specific task to do
+int wsize[1::2]:	set the window-lenght (default 2 periods)
+bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+
+OUTPUT: R by 1 matrix
++ Matrix includes the computed statistics for each window
+
+-----------------
+rvec2series():
+-----------------
+INPUT:
+series y: 			series which is used for computing some statistics
+matrix m:			R by 1 vector &quot;Some vector of interest&quot;
+int wsize[1::2]:	set the window-lenght (default 2 periods)
+bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+
+OUTPUT: series
++ Series of rolling/ recursively computed statistics based in 'y'
+correctly aligned with time
+</help>
+<gretl-function name="rolling_ts" type="matrix">
+ <params count="4">
+  <param name="y" type="series">
+<description>Series of interest</description>
+  </param>
+  <param name="which" type="string">
+<description>Which statistics? Use gretl built-ins</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+  <param name="recursive" type="bool" default="0">
+<description>Recursive (expanding) window (default 0, rolling window)</description>
+  </param>
+ </params>
+<code># rolling_ts -- Rolling Time-series Statistics
+smpl y --no-missing
+scalar nsteps = nobs(y) - wsize + 1
+matrix m = zeros(nsteps,1)	# store results
+smpl $t1 ($t1+wsize-1)
+loop i=1..nsteps -q
+  m[i] = @which	# call some built-in function
+  if i&lt;nsteps
+    if recursive==1
+      smpl ; +1
+    else
+      smpl +1 +1
+    endif
+  endif
+endloop
+/*
+# transform into series
+smpl y --no-missing --replace
+smpl ($t1+wsize-1) $t2
+series S = m
+return S
+*/
+return m
+</code>
+</gretl-function>
+<gretl-function name="rvec2series" type="series">
+ <params count="3">
+  <param name="y" type="series">
+<description>Series of interest</description>
+  </param>
+  <param name="m" type="matrix">
+<description>Some vector of interest</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+ </params>
+<code># transform 'm' into series
+smpl y --no-missing --replace
+smpl ($t1+wsize-1) $t2
+if nobs(y) != rows(vec(m))
+  printf &quot;\nError: Vector 'm' has not the right length.\n&quot;
+  funcerr &quot;Check whether the current sample is correctly specified.&quot;
+endif
+series S = vec(m)
+return S
+</code>
+</gretl-function>
+<gretl-function name="rolling_ts_gui" type="series" menu-only="1" pkg-role="gui-main">
+ <params count="4">
+  <param name="y" type="series">
+<description>Select series of interest (y)</description>
+  </param>
+  <param name="which" type="string">
+<description>Compute: e.g 'mean(y)'</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+  <param name="recursive" type="bool" default="0">
+<description>Recursive window (default 'rolling')</description>
+  </param>
+ </params>
+<code>series S = rvec2series(y, rolling_ts(y, which, wsize, recursive), wsize)
+printf &quot;\n Series computed\n&quot;
+return S
+</code>
+</gretl-function>
+<sample-script>
+set verbose off
+include Rolling_Stats.gfn --force
+
+open denmark.gdt -q
+
+scalar wsize = 22	# window lenght
+
+# Skewness
+matrix mSK = rolling_ts(LRM, &quot;skewness(y)&quot;, wsize)
+series SK = rvec2series(LRM, mSK, wsize)
+print SK -o
+
+# Minimum -- &quot;one-liner&quot;
+series MIN = rvec2series(LRM, rolling_ts(LRM, &quot;min(y)&quot;, wsize), wsize)
+print MIN -o
+
+# AR(1)-coefficient over time (w.o. intercept in the regression)
+matrix mbhat = rolling_ts(LRM, &quot;mols({y}[2:], mlag({y},1)[2:])&quot;, wsize, 0)
+series bhat = rvec2series(LRM, mbhat, wsize)
+gnuplot bhat --with-lines --time-series --output=display
+</sample-script>
+</gretl-function-package>
+</gretl-functions>

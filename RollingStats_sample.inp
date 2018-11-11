@@ -1,5 +1,6 @@
-clear
 set verbose off
+include Rolling_Stats.gfn --force
+
 open denmark.gdt -q
 
 scalar wsize = 22	# window lenght
@@ -17,4 +18,3 @@ print MIN -o
 matrix mbhat = rolling_ts(LRM, "mols({y}[2:], mlag({y},1)[2:])", wsize, 0)
 series bhat = rvec2series(LRM, mbhat, wsize)
 gnuplot bhat --with-lines --time-series --output=display
-
