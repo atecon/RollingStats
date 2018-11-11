@@ -2,13 +2,14 @@ clear
 open denmark.gdt -q
 
 # Skewness
-series SK = rolling(LRM, "skewness(y)", 22)
+series SK = rolling_ts(LRM, "skewness(y)", 22)
 print SK -o
 
 # Minimum
-series MIN = rolling(LRM, "min(y)", 22)
+series MIN = rolling_ts(LRM, "min(y)", 22)
 print MIN -o
 
 # AR(1)-coefficient over time (w.o. intercept in the regression)
-series bhat = rolling(LRM, "mols({y}[2:], mlag({y},1)[2:])", 22, 0)
+series bhat = rolling_ts(LRM, "mols({y}[2:], mlag({y},1)[2:])", 22, 0)
 print bhat -o
+
