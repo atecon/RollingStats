@@ -1,5 +1,5 @@
 set verbose off
-include Rolling_Stats.gfn --force
+include RollingStats.gfn --force
 
 open denmark.gdt -q
 
