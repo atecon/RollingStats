@@ -1,24 +1,4 @@
-set verbose off
-
-/*
-   function series rollcorrel (list x, (list x,
-   int selStat[1:7:1] "1=Mean, 2=p-thMedian, 3=SD, \
-   4=Min., 5=Max, 6=Skewn., 7=Correlation",
-   int wsize[1::] "Size of window",
-   scalar pquant[0.01:0.99:] "iff selStat=2: choose quantile")
-
-   end function
-*/
-
-
-/*
-   function series rolling (list x,
-   int selStat[1:7:1] "1=Mean, 2=p-thMedian, 3=SD, \
-   4=Min., 5=Max, 6=Skewn., 7=Correlation",
-   int wsize[1::] "Size of window",
-   scalar pquant[0.01:0.99:] "iff selStat=2: choose quantile")
-*/
-function series rolling_ts (series y "Series of interest",
+function matrix rolling_ts (series y "Series of interest",
                             string which "Which statistics? Use gretl built-ins",
                             int wsize[1::2] "Size of the moving window",
                             bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
@@ -27,11 +7,11 @@ function series rolling_ts (series y "Series of interest",
 
     smpl y --no-missing
     scalar nsteps = nobs(y) - wsize + 1
-    matrix mout = zeros(nsteps,1)	# store results
+    matrix m = zeros(nsteps,1)	# store results
     smpl $t1 ($t1+wsize-1)
 
     loop i=1..nsteps -q
-        mout[i] = @which	# call some built-in function
+        m[i] = @which	# call some built-in function
         if i<nsteps
             if recursive
                 smpl ; +1
@@ -41,13 +21,40 @@ function series rolling_ts (series y "Series of interest",
         endif
     endloop
 
+    /*
     # transform into series
     smpl y --no-missing --replace
     smpl ($t1+wsize-1) $t2
-    series S = mout
+    series S = m
     return S
+    */
+    return m
 end function
 
+
+function series rvec2series (series y "Series of interest",
+                            matrix m "Some vector of interest", 
+                            int wsize[1::2] "Size of the moving window")
+    # transform 'm' into series
+    smpl y --no-missing --replace
+    smpl ($t1+wsize-1) $t2
+    if nobs(y) != rows(vec(m))
+        printf "\nError: Vector 'm' has not the right length.\n"
+        funcerr "Check whether the current sample is correctly specified."
+    endif    
+    series S = vec(m)
+    return S     
+end function
+
+function series rolling_ts_gui (series y "Series of interest",
+                            string which "Which statistics? e.g 'mean(y)'",
+                            int wsize[1::2] "Size of the moving window",
+                            bool recursive[0] "Recursive window (default 'rolling')")
+    
+    series RollStatsTs = rvec2series(y, rolling_ts(y, which, wsize), wsize)
+    printf "\n Series 'RollStatsTs' computed\n"
+    return RollStatsTs
+end function
 
 /*
    function matrix skew (matrix X)

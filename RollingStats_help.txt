@@ -1,0 +1,53 @@
+===============================
+"RollingStats" -- Gretl package
+===============================
+
+Author: Artur Tarassow
+Email: atecon@cryptolab.net
+
+
+version history
+****************
+0.1: Nov., 2018
+- initial public version
+
+
+Public functions:
+*****************
+rolling_ts(): Rolling Univariate Time-series Statistics
+-------------
++ This function allows the user to compute specific statistics
+in either a 'rolling' (fixed, shifting window through time) or 'recursive'
+(expanding window through time) manner.
++ In principle all -- both built-in as well as user-defined functions (UDF)
+-- can be called which have a scalar value as its outcome.
+
+rvec2series(): Transforms vector into series object
+--------------
++ Transforms the resulting vector from rolling_ts() into a series
+
+
+-----------------
+rolling_ts():
+-----------------
+INPUT:
+series y: 			series which is used for computing some statistics
+string which:		string, put into string a very specific task to do
+int wsize[1::2]:	set the window-lenght (default 2 periods)
+bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+
+OUTPUT: R by 1 matrix
++ Matrix includes the computed statistics for each window
+
+-----------------
+rvec2series():
+-----------------
+INPUT:
+series y: 			series which is used for computing some statistics
+matrix m:			R by 1 vector "Some vector of interest"
+int wsize[1::2]:	set the window-lenght (default 2 periods)
+bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+
+OUTPUT: series
++ Series of rolling/ recursively computed statistics based in 'y'
+correctly aligned with time

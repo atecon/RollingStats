@@ -1,15 +1,20 @@
 clear
+set verbose off
 open denmark.gdt -q
 
+scalar wsize = 22	# window lenght
+
 # Skewness
-series SK = rolling_ts(LRM, "skewness(y)", 22)
+matrix mSK = rolling_ts(LRM, "skewness(y)", wsize)
+series SK = rvec2series(LRM, mSK, wsize)
 print SK -o
 
-# Minimum
-series MIN = rolling_ts(LRM, "min(y)", 22)
+# Minimum -- "one-liner"
+series MIN = rvec2series(LRM, rolling_ts(LRM, "min(y)", wsize), wsize)
 print MIN -o
 
 # AR(1)-coefficient over time (w.o. intercept in the regression)
-series bhat = rolling_ts(LRM, "mols({y}[2:], mlag({y},1)[2:])", 22, 0)
-print bhat -o
+matrix mbhat = rolling_ts(LRM, "mols({y}[2:], mlag({y},1)[2:])", wsize, 0)
+series bhat = rvec2series(LRM, mbhat, wsize)
+gnuplot bhat --with-lines --time-series --output=display
 
