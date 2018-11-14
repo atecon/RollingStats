@@ -1,17 +1,16 @@
 function matrix rolling_ts (series y "Series of interest",
-                            string which "Which statistics? Use gretl built-ins",
+                            string op "Name of the function to call",
                             int wsize[1::2] "Size of the moving window",
                             bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
 
     # rolling_ts -- Rolling Time-series Statistics
-
     smpl y --no-missing
     scalar nsteps = nobs(y) - wsize + 1
-    matrix m = zeros(nsteps,1)	# store results
+    matrix ret = zeros(nsteps,1)	# store results
     smpl $t1 ($t1+wsize-1)
 
     loop i=1..nsteps -q
-        m[i] = @which	# call some built-in function
+        ret[i] = feval(op, y)	# call function
         if i<nsteps
             if recursive==1
                 smpl ; +1
@@ -20,40 +19,33 @@ function matrix rolling_ts (series y "Series of interest",
             endif
         endif
     endloop
-
-    /*
-    # transform into series
-    smpl y --no-missing --replace
-    smpl ($t1+wsize-1) $t2
-    series S = m
-    return S
-    */
-    return m
+    return ret
 end function
 
 
 function series rvec2series (series y "Series of interest",
-                            matrix m "Some vector of interest", 
-                            int wsize[1::2] "Size of the moving window")
-    # transform 'm' into series
+                             matrix ret "Computed vector",
+                             int wsize[1::2] "Size of the moving window")
+    # transform 'ret' into series
     smpl y --no-missing --replace
     smpl ($t1+wsize-1) $t2
-    if nobs(y) != rows(vec(m))
+    ret = vec(ret)
+    if nobs(y) != rows(ret)
         printf "\nError: Vector 'm' has not the right length.\n"
         funcerr "Check whether the current sample is correctly specified."
-    endif    
-    series S = vec(m)
+    endif
+    series S = ret
     setinfo S --description="rolling_ts() statistics"
     setinfo S --graph-name="rolling_ts() statistics"
-    return S     
+    return S
 end function
 
-function series rolling_ts_gui (series y "Select series of interest (y)",
-                            string which "Compute: e.g 'mean(y)'",
-                            int wsize[1::2] "Size of the moving window",
-                            bool recursive[0] "Recursive window (default 'rolling')")
-    
-    series S = rvec2series(y, rolling_ts(y, which, wsize, recursive), wsize)
+function series rolling_ts_gui (series y "Select series of interest",
+      string op "Name of the function",
+      int wsize[1::2] "Size of the moving window",
+      bool recursive[0] "Recursive window (default 'rolling')")
+
+    series S = rvec2series(y, rolling_ts(y, op, wsize, recursive), wsize)
     printf "\n Series computed\n"
     return S
 end function

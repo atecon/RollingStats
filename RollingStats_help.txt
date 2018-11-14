@@ -4,7 +4,7 @@
 
 Author: Artur Tarassow
 Email: atecon@cryptolab.net
-
+Web: https://sites.google.com/site/arturtarassow/
 
 version history
 ****************
@@ -22,30 +22,46 @@ in either a 'rolling' (fixed, shifting window through time) or 'recursive'
 + In principle all -- both built-in as well as user-defined functions (UDF)
 -- can be called which have a scalar value as its outcome.
 
-rvec2series(): Transforms vector into series object
+rvec2series():
 --------------
 + Transforms the resulting vector from rolling_ts() into a series
 
+rolling_ts_gui():
+---------------
++ Access rolling_ts() and rvec2series() through the GUI
 
 -----------------
 rolling_ts():
 -----------------
 INPUT:
-series y: 			series which is used for computing some statistics
-string which:		string, put into string a very specific task to do
-int wsize[1::2]:	set the window-lenght (default 2 periods)
+series y: 		series which is used for computing some statistics
+string op:		string, name of the function you want to call
+int wsize[1::2]:	integer, size of the moving window (default 2 periods)
 bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
 
 OUTPUT: R by 1 matrix
-+ Matrix includes the computed statistics for each window
++ Matrix includes the computed statistics for each of the R windows
 
 -----------------
 rvec2series():
 -----------------
 INPUT:
-series y: 			series which is used for computing some statistics
-matrix m:			R by 1 vector "Some vector of interest"
-int wsize[1::2]:	set the window-lenght (default 2 periods)
+series y: 		series which is used for computing some statistics
+matrix ret:		matrix, R by 1 vector comprising the computed statistics
+int wsize[1::2]:	integer, size of the moving window (default 2 periods)
+bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+
+OUTPUT: series
++ Series of rolling/ recursively computed statistics based in 'y'
+correctly aligned with time
+
+-----------------
+rolling_ts_gui():
+-----------------
+INPUT:
+series y: 		series which is used for computing some statistics
+string op:		string, name of the function you want to call
+int wsize[1::2]:	integer, size of the moving window (default 2 periods)
 bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
 
 OUTPUT: series

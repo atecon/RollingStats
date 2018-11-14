@@ -1,10 +1,10 @@
 author = Artur Tarassow
 email = atecon@cryptolab.net
 version = 0.1
-date = 2018-11-11
+date = 2018-11-14
 description = Rolling Time-Series Statistics
 tags = C10
-min-version = 2017a
+min-version = 2018a
 data-requirement = needs-time-series-data
 gui-main = rolling_ts_gui
 label = Rolling Time-series Stats
