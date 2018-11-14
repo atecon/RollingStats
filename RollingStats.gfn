@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2018a">
+<gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2018d">
 <author email="atecon@cryptolab.net">Artur Tarassow</author>
 <version>0.1</version>
 <date>2018-11-14</date>
