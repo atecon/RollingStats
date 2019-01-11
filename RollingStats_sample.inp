@@ -52,7 +52,8 @@ end function
 # Call the user-defined function
 list all = LRM const LRY				# list of the endogenous (1st entry) and regressors
 matrices Mout = null					# put point estimates and std. errors into matrix array
-matrix mat = rolling_ts(all, "roll_bhat_ols", wsize, recursive, &Mout)	# see the point form for Mout
+rolling_ts(all, "roll_bhat_ols", wsize, recursive, &Mout)	# see the pointer form for Mout
+print Mout
 matrix mbhat = Mout[1]'					# grab rolling point estimates
 strings regnames = varnames(all[2:])	# grab names of regressors
 cnameset(mbhat, regnames)				# name the columns

@@ -57,23 +57,47 @@ function matrix rolling_ts (list y "List of series of interest",
 end function
 
 
-function series rvec2series (series y "Reference series",
-                             matrix ret "Computed vector",
+function series rvec2series (series y "A reference series for grabbing correct dates",
+                             matrix mat "Information matrix (rows=moving windows, cols=variables)",
                              int wsize[1::2] "Size of the moving window")
-    # transform 'ret' into series
-    # y is needed to market that ret has the correct date
+    # transform each column of ret into a series
+    # y is needed to make sure that ret has the correct date
     smpl y --no-missing
     smpl ($t1+wsize-1) $t2
-    ret = vec(ret)
-    if nobs(y) != rows(ret)
-        printf "\nError: Vector 'm' has not the right length.\n"
+    #mat = vec(mat)
+    if nobs(y) != rows(mat)
+        printf "\nError: Number of observations in 'y' and the matrix are of different length.\n"
         funcerr "Check whether the current sample is correctly specified."
     endif
-    series S = ret
+    series S = mat
     setinfo S --description="rolling_ts() statistics"
     setinfo S --graph-name="rolling_ts() statistics"
     return S
 end function
+
+/* FOR FUTURE VERSIONS
+function list rvec2series (series y "A reference series for grabbing correct dates",
+                           matrix mat "Information matrix (rows=moving windows, cols=variables)",
+                             int wsize[1::2] "Size of the moving window")
+    # transform each column of ret into a series
+    # y is needed to make sure that ret has the correct date
+    smpl y --no-missing
+    smpl ($t1+wsize-1) $t2
+    #mat = vec(mat)
+    if nobs(y) != rows(mat)
+        printf "\nError: Number of observations in 'y' and the matrix are of different length.\n"
+        funcerr "Check whether the current sample is correctly specified."
+    endif
+    list L = null
+    loop i=1..cols(mat) -q
+        series Rolling_Series_$i = mat[,i]
+        L += Rolling_Series_$i
+        setinfo Rolling_Series_$i --description="rolling_ts() series"
+        setinfo Rolling_Series_$i --graph-name="rolling_ts() series $i"
+    endloop
+    return L
+end function
+*/
 
 function series rolling_ts_gui (series y "Select series of interest",
                                 string op "Name of the function",

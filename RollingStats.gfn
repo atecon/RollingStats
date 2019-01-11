@@ -27,7 +27,7 @@ version history
 	- the user may provide a matrix array in pointer form
 	for storing multiple matrices returned by some
 	user-defined function
-	+ update the sample and manual script accordingly
+	+ update the sample script and manual script accordingly
 0.1: Nov., 2018
 + initial public version
 
@@ -40,15 +40,14 @@ rolling_ts(): Rolling Univariate Time-series Statistics
 in either a 'rolling' (fixed, shifting window through time) or
 'recursive' (expanding window through time) manner.
 + In principle all -- both built-in as well as user-defined
-functions (UDF)
--- can be called which have a scalar value as its outcome.
+functions (UDF) -- can be called which have a scalar value as
+its outcome.
 
 rvec2series():
 --------------
-+ Transforms the resulting R by 1 vector returned from rolling_ts()
-into a series
++ Transforms an R by 1 vector into a series
 + For a list of series, use a loop calling rvec2series() multiple
-times
+times instead
 
 rolling_ts_gui():
 ---------------
@@ -78,16 +77,19 @@ matrix where R refers to the number of moving windows and k is
 some output vector returned by the operation 'op' is returned.
 + In case a matrix array *M is sent to rolling_ts(), the output
 matrix is 1 by 1 with an NA entry, and all information are stored
-in the matrix array M, instead
+in the matrix array M, instead.
+Note for this case one can also just run the command
+'rolling_ts(y, op, wsize, recursive, &amp;M)' without referencing
+to any matrix, as information is stored in the array M.
 
 
 -----------------
 rvec2series():
 -----------------
 INPUT:
-series y: 		series which is used for computing some
-			statistics
-matrix ret:		matrix, R by 1 vector comprising the computed
+series y: 		series with R observations which is used for
+			date referencing vector in m correctly
+matrix m:		matrix, R by 1 vector comprising the computed
 			statistics
 int wsize[1::2]:	integer, size of the moving window (default
 			2 periods)
@@ -180,25 +182,25 @@ return ret
 <gretl-function name="rvec2series" type="series">
  <params count="3">
   <param name="y" type="series">
-<description>Reference series</description>
+<description>A reference series for grabbing correct dates</description>
   </param>
-  <param name="ret" type="matrix">
-<description>Computed vector</description>
+  <param name="mat" type="matrix">
+<description>Information matrix (rows=moving windows, cols=variables)</description>
   </param>
   <param name="wsize" type="int" min="1" default="2">
 <description>Size of the moving window</description>
   </param>
  </params>
-<code># transform 'ret' into series
-# y is needed to market that ret has the correct date
+<code># transform each column of ret into a series
+# y is needed to make sure that ret has the correct date
 smpl y --no-missing
 smpl ($t1+wsize-1) $t2
-ret = vec(ret)
-if nobs(y) != rows(ret)
-  printf &quot;\nError: Vector 'm' has not the right length.\n&quot;
+#mat = vec(mat)
+if nobs(y) != rows(mat)
+  printf &quot;\nError: Number of observations in 'y' and the matrix are of different length.\n&quot;
   funcerr &quot;Check whether the current sample is correctly specified.&quot;
 endif
-series S = ret
+series S = mat
 setinfo S --description=&quot;rolling_ts() statistics&quot;
 setinfo S --graph-name=&quot;rolling_ts() statistics&quot;
 return S
@@ -279,7 +281,8 @@ end function
 # Call the user-defined function
 list all = LRM const LRY				# list of the endogenous (1st entry) and regressors
 matrices Mout = null					# put point estimates and std. errors into matrix array
-matrix mat = rolling_ts(all, &quot;roll_bhat_ols&quot;, wsize, recursive, &amp;Mout)	# see the point form for Mout
+rolling_ts(all, &quot;roll_bhat_ols&quot;, wsize, recursive, &amp;Mout)	# see the pointer form for Mout
+print Mout
 matrix mbhat = Mout[1]'					# grab rolling point estimates
 strings regnames = varnames(all[2:])	# grab names of regressors
 cnameset(mbhat, regnames)				# name the columns
