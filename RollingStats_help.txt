@@ -9,11 +9,16 @@ Web: https://sites.google.com/site/arturtarassow/
 version history
 ****************
 0.2: Jan., 2019
-- add rolling_ts_list() allowing for more providing a list of series and
-returning a matrices object
-- update the sample and manual script accordingly
++ Work on rolling_ts():
+	- 'y' can be a list of series now
+	- the output matrix can be a matrix of size R by n
+	instead of R by 1
+	- the user may provide a matrix array in pointer form
+	for storing multiple matrices returned by some user-defined
+	function
+	+ update the sample and manual script accordingly
 0.1: Nov., 2018
-- initial public version
++ initial public version
 
 
 Public functions:
@@ -26,44 +31,33 @@ in either a 'rolling' (fixed, shifting window through time) or 'recursive'
 + In principle all -- both built-in as well as user-defined functions (UDF)
 -- can be called which have a scalar value as its outcome.
 
-rolling_ts_list(): Rolling Univariate Time-series Statistics
------------------
-+ This function is similar to rolling_ts() but mainly for UDFs which return
-a matrices object which can comprise multiple matrices
-+ Also this function allows the user to supply a list of series instead of a single series
-
-
 rvec2series():
 --------------
-+ Transforms the resulting vector from rolling_ts() into a series
++ Transforms the resulting R by 1 vector returned from rolling_ts() into a series
++ For a list of series, use a loop calling rvec2series() multiple times
 
 rolling_ts_gui():
 ---------------
 + Access rolling_ts() and rvec2series() through the GUI
++ NOTE: only a single series is allowed as input instead of a list of series
 
 -----------------
 rolling_ts():
 -----------------
 INPUT:
-series y: 		series which is used for computing some statistics
+list y: 		list of series which is used for computing some statistics
 string op:		string, name of the function you want to call
 int wsize[1::2]:	integer, size of the moving window (default 2 periods)
 bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+recursive[0]:		0: rolling-window (default), 1: recursive (expanding) window
+matrices *M[null]:	matrix array in pointer form for storing multiple matrices returned by 'op'
 
-OUTPUT: R by 1 matrix
-+ Matrix includes the computed statistics for each of the R windows
-
-------------------
-rolling_ts_list():
-------------------
-INPUT:
-list y: 		list which is used for computing some statistics
-string op:		string, name of the function you want to call
-int wsize[1::2]:	integer, size of the moving window (default 2 periods)
-bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
-
-OUTPUT: a matrices object holding some R by 1 matrices
-+ Details depend on the user-defined funtion
+OUTPUT:
++ In case no matrix array *M is given to rolling_ts(), a R by k matrix
+where R refers to the number of moving windows and k is some output
+vector returned by the operation 'op' is returned.
++ In case a matrix array *M is sent to rolling_ts(), the output matrix
+is 1 by 1 with an NA entry, and all information are stored in the matrix array M, instead
 
 
 -----------------

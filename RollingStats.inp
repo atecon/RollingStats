@@ -1,46 +1,50 @@
 function matrix rolling_ts (list y "List of series of interest",
-                            string op "Name of the function to call",
-                            int wsize[1::2] "Size of the moving window",
-                            bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
+                                 string op "Name of the function to call",
+                                 int wsize[1::2] "Size of the moving window",
+                                 bool recursive[0] "Recursive (expanding) window (default 0, rolling window)",
+                                 matrices *M[null] "Store output in matrices object (optional)")
 
-    # rolling_ts -- Rolling Time-series Statistics
-    smpl y --no-missing
-    scalar nsteps = nobs(y) - wsize + 1
-    matrix ret = zeros(nsteps,1)	# store results
-    smpl $t1 ($t1+wsize-1)
-
-    loop i=1..nsteps -q
-        ret[i] = feval(op, y)	# call function
-        if i<nsteps
-            if recursive==1
-                smpl ; +1
-            else
-                smpl +1 +1
-            endif
-        endif
-    endloop
-    return ret
-end function
-
-function matrices rolling_ts_list (list y "List of series of interest",
-                            string op "Name of the function to call",
-                            int wsize[1::2] "Size of the moving window",
-                            bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
-
-    # rolling_ts -- Rolling Time-series Statistics
+    # Rolling Time-series Statistics
     smpl --no-missing y
-    scalar nsteps = $nobs - wsize + 1    
+
+    # set list or series properly
+    if nelem(y)==1
+        series Y = y[1] # make sure that fun. which require a series work
+    else
+        list Y = y		# ensure consistent naming
+    endif
+    
+    # Moving window settings    
+    scalar nsteps = $nobs - wsize + 1
     smpl $t1 ($t1+wsize-1)
 
-    loop i=1..nsteps -q        
-        matrices mat = feval(op, y)		# call function
-        matrices ret = (i==1) ? array(nelem(mat)) : ret 	# for storing final results        
-        # update each matrix in matrices
-        loop j=1..nelem(mat) -q
-            ret[j] ~= mat[j]	# grab last version of j-th matrix in ret
-            matrix m = ret[j]
-            ret[j] = m		# update j-th matrix in ret
-        endloop
+    # RUN moving window
+    loop i=1..nsteps -q
+
+        out = feval(op, Y)		# call function
+            
+        # Set up matrix or matrix array 
+        if i==1 	# Determine type of "out"
+            string type = typestr(typeof(out))
+            if type=="matrix" || type=="scalar"
+                matrix ret = zeros(nsteps,cols(out))	# store results in matrix
+            elif type=="array"
+                if !exists(M)
+                    funcerr "Please point to an matrix array in point form."
+                endif
+                matrices M = array(nelem(out))	# store results in matrices
+                matrix ret = NA					# final function return value
+            endif
+        endif
+        
+        if type=="array"			# update each matrix in the array
+            loop j=1..nelem(out) -q
+                M[j] ~= out[j]		# concatenate each array element
+            endloop
+        else            
+            ret[i,] = vec(out)'		# update matrix entries
+        endif
+
         if i<nsteps
             if recursive==1
                 smpl ; +1
@@ -51,6 +55,7 @@ function matrices rolling_ts_list (list y "List of series of interest",
     endloop
     return ret
 end function
+
 
 function series rvec2series (series y "Reference series",
                              matrix ret "Computed vector",
@@ -71,9 +76,9 @@ function series rvec2series (series y "Reference series",
 end function
 
 function series rolling_ts_gui (series y "Select series of interest",
-      string op "Name of the function",
-      int wsize[1::2] "Size of the moving window",
-      bool recursive[0] "Recursive window (default 'rolling')")
+                                string op "Name of the function",
+                                int wsize[1::2] "Size of the moving window",
+                                bool recursive[0] "Recursive window (default 'rolling')")
 
     series S = rvec2series(y, rolling_ts(y, op, wsize, recursive), wsize)
     printf "\n Series computed\n"

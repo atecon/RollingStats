@@ -1,20 +1,24 @@
 set verbose off
-#include RollingStats.gfn --force
-include /home/at/git/Rolling_Stats/RollingStats.gfn --force
-open denmark.gdt -q	# load some time-series dataset
+include RollingStats.gfn --force
 
-scalar wsize = 22	# set window lenght
+open denmark.gdt -q		# load some time-series dataset
+scalar wsize = 22		# set window lenght
+scalar recursive = 0	# Moving-window type: 0=fixed window length, 1=expanding window
 
 #----------------------
 # (A) Use of rolling_ts
 #----------------------
+matrix mSK = rolling_ts(LRM, "min", wsize)
+series SK = rvec2series(LRM, mSK, wsize)
+print SK -o
+
 # Skewness
 matrix mSK = rolling_ts(LRM, "skewness", wsize)
 series SK = rvec2series(LRM, mSK, wsize)
 print SK -o
 
 # Minimum -- "one-liner"
-series MIN = rvec2series(LRM, rolling_ts(LRM, "min", wsize), wsize)
+series MIN = rvec2series(LRM, rolling_ts(LRM, "min", wsize, recursive), wsize)
 print MIN -o
 
 # Call your own user-defined function
@@ -24,9 +28,10 @@ function scalar my_AR1 (const series y)
     return $coeff[2]	# return AR(1) coeff.
 end function 
 # Call
-matrix mbhat = rolling_ts(LRM, "my_AR1", wsize, 0)
+matrix mbhat = rolling_ts(LRM, "my_AR1", wsize, recursive)
 series bhat = rvec2series(LRM, mbhat, wsize)
 gnuplot bhat --with-lines --time-series --output=display
+
 
 
 #----------------------------
@@ -45,13 +50,14 @@ function matrices roll_bhat_ols (const list L)
 end function
 
 # Call the user-defined function
-list all = LRM const LRY		# list of the endogenous (1st entry) and regressors
-matrices Mout = rolling_ts_list(all, "roll_bhat_ols", wsize)
-matrix mbhat = Mout[1]'				# grab rolling point estimates
-strings regnames = varnames(all[2:])# grab names of regressors
-cnameset(mbhat, regnames)			# name the columns
-matrix stderr = Mout[2]'			# grab rolling std. errors
-cnameset(stderr, regnames)	# name the columns
+list all = LRM const LRY				# list of the endogenous (1st entry) and regressors
+matrices Mout = null					# put point estimates and std. errors into matrix array
+matrix mat = rolling_ts(all, "roll_bhat_ols", wsize, recursive, &Mout)	# see the point form for Mout
+matrix mbhat = Mout[1]'					# grab rolling point estimates
+strings regnames = varnames(all[2:])	# grab names of regressors
+cnameset(mbhat, regnames)				# name the columns
+matrix stderr = Mout[2]'				# grab rolling std. errors
+cnameset(stderr, regnames)				# name the columns
 printf "\nRolling window estimation results:"
 print mbhat
 #print stderr

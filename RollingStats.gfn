@@ -20,11 +20,16 @@ Web: https://sites.google.com/site/arturtarassow/
 version history
 ****************
 0.2: Jan., 2019
-- add rolling_ts_list() allowing for more providing a list of series and
-returning a matrices object
-- update the sample and manual script accordingly
++ Work on rolling_ts():
+	- 'y' can be a list of series now
+	- the output matrix can be a matrix of size R by n
+	instead of R by 1
+	- the user may provide a matrix array in pointer form
+	for storing multiple matrices returned by some user-defined
+	function
+	+ update the sample and manual script accordingly
 0.1: Nov., 2018
-- initial public version
++ initial public version
 
 
 Public functions:
@@ -37,44 +42,33 @@ in either a 'rolling' (fixed, shifting window through time) or 'recursive'
 + In principle all -- both built-in as well as user-defined functions (UDF)
 -- can be called which have a scalar value as its outcome.
 
-rolling_ts_list(): Rolling Univariate Time-series Statistics
------------------
-+ This function is similar to rolling_ts() but mainly for UDFs which return
-a matrices object which can comprise multiple matrices
-+ Also this function allows the user to supply a list of series instead of a single series
-
-
 rvec2series():
 --------------
-+ Transforms the resulting vector from rolling_ts() into a series
++ Transforms the resulting R by 1 vector returned from rolling_ts() into a series
++ For a list of series, use a loop calling rvec2series() multiple times
 
 rolling_ts_gui():
 ---------------
 + Access rolling_ts() and rvec2series() through the GUI
++ NOTE: only a single series is allowed as input instead of a list of series
 
 -----------------
 rolling_ts():
 -----------------
 INPUT:
-series y: 		series which is used for computing some statistics
+list y: 		list of series which is used for computing some statistics
 string op:		string, name of the function you want to call
 int wsize[1::2]:	integer, size of the moving window (default 2 periods)
 bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
+recursive[0]:		0: rolling-window (default), 1: recursive (expanding) window
+matrices *M[null]:	matrix array in pointer form for storing multiple matrices returned by 'op'
 
-OUTPUT: R by 1 matrix
-+ Matrix includes the computed statistics for each of the R windows
-
-------------------
-rolling_ts_list():
-------------------
-INPUT:
-list y: 		list which is used for computing some statistics
-string op:		string, name of the function you want to call
-int wsize[1::2]:	integer, size of the moving window (default 2 periods)
-bool recursive[0]:	0: rolling-window (default), 1: recursive (expanding) window
-
-OUTPUT: a matrices object holding some R by 1 matrices
-+ Details depend on the user-defined funtion
+OUTPUT:
++ In case no matrix array *M is given to rolling_ts(), a R by k matrix
+where R refers to the number of moving windows and k is some output
+vector returned by the operation 'op' is returned.
++ In case a matrix array *M is sent to rolling_ts(), the output matrix
+is 1 by 1 with an NA entry, and all information are stored in the matrix array M, instead
 
 
 -----------------
@@ -104,42 +98,9 @@ OUTPUT: series
 correctly aligned with time
 </help>
 <gretl-function name="rolling_ts" type="matrix">
- <params count="4">
-  <param name="y" type="series">
-<description>Series of interest</description>
-  </param>
-  <param name="op" type="string">
-<description>Name of the function to call</description>
-  </param>
-  <param name="wsize" type="int" min="1" default="2">
-<description>Size of the moving window</description>
-  </param>
-  <param name="recursive" type="bool" default="0">
-<description>Recursive (expanding) window (default 0, rolling window)</description>
-  </param>
- </params>
-<code># rolling_ts -- Rolling Time-series Statistics
-smpl y --no-missing
-scalar nsteps = nobs(y) - wsize + 1
-matrix ret = zeros(nsteps,1)	# store results
-smpl $t1 ($t1+wsize-1)
-loop i=1..nsteps -q
-  ret[i] = feval(op, y)	# call function
-  if i&lt;nsteps
-    if recursive==1
-      smpl ; +1
-    else
-      smpl +1 +1
-    endif
-  endif
-endloop
-return ret
-</code>
-</gretl-function>
-<gretl-function name="rolling_ts_list" type="matrices">
- <params count="4">
+ <params count="5">
   <param name="y" type="list">
-<description>List of interest</description>
+<description>List of series of interest</description>
   </param>
   <param name="op" type="string">
 <description>Name of the function to call</description>
@@ -150,20 +111,44 @@ return ret
   <param name="recursive" type="bool" default="0">
 <description>Recursive (expanding) window (default 0, rolling window)</description>
   </param>
+  <param name="M" type="matricesref" optional="true">
+<description>Store output in matrices object (optional)</description>
+  </param>
  </params>
-<code># rolling_ts -- Rolling Time-series Statistics
+<code># Rolling Time-series Statistics
 smpl --no-missing y
+# set list or series properly
+if nelem(y)==1
+  series Y = y[1] # make sure that fun. which require a series work
+else
+  list Y = y		# ensure consistent naming
+endif
+# Moving window settings
 scalar nsteps = $nobs - wsize + 1
 smpl $t1 ($t1+wsize-1)
+# RUN moving window
 loop i=1..nsteps -q
-  matrices mat = feval(op, y)		# call function
-  matrices ret = (i==1) ? array(nelem(mat)) : ret 	# for storing final results
-  # update each matrix in matrices
-  loop j=1..nelem(mat) -q
-    ret[j] ~= mat[j]	# grab last version of j-th matrix in ret
-    matrix m = ret[j]
-    ret[j] = m		# update j-th matrix in ret
-  endloop
+  out = feval(op, Y)		# call function
+  # Set up matrix or matrix array
+  if i==1 	# Determine type of &quot;out&quot;
+    string type = typestr(typeof(out))
+    if type==&quot;matrix&quot; || type==&quot;scalar&quot;
+      matrix ret = zeros(nsteps,cols(out))	# store results in matrix
+    elif type==&quot;array&quot;
+      if !exists(M)
+        funcerr &quot;Please point to an matrix array in point form.&quot;
+      endif
+      matrices M = array(nelem(out))	# store results in matrices
+      matrix ret = NA					# final function return value
+    endif
+  endif
+  if type==&quot;array&quot;			# update each matrix in the array
+    loop j=1..nelem(out) -q
+      M[j] ~= out[j]		# concatenate each array element
+    endloop
+  else
+    ret[i,] = vec(out)'		# update matrix entries
+  endif
   if i&lt;nsteps
     if recursive==1
       smpl ; +1
@@ -226,20 +211,24 @@ return S
 set verbose off
 include RollingStats.gfn --force
 
-open denmark.gdt -q	# load some time-series dataset
-
-scalar wsize = 22	# set window lenght
+open denmark.gdt -q		# load some time-series dataset
+scalar wsize = 22		# set window lenght
+scalar recursive = 0	# Moving-window type: 0=fixed window length, 1=expanding window
 
 #----------------------
 # (A) Use of rolling_ts
 #----------------------
+matrix mSK = rolling_ts(LRM, &quot;min&quot;, wsize)
+series SK = rvec2series(LRM, mSK, wsize)
+print SK -o
+
 # Skewness
 matrix mSK = rolling_ts(LRM, &quot;skewness&quot;, wsize)
 series SK = rvec2series(LRM, mSK, wsize)
 print SK -o
 
 # Minimum -- &quot;one-liner&quot;
-series MIN = rvec2series(LRM, rolling_ts(LRM, &quot;min&quot;, wsize), wsize)
+series MIN = rvec2series(LRM, rolling_ts(LRM, &quot;min&quot;, wsize, recursive), wsize)
 print MIN -o
 
 # Call your own user-defined function
@@ -249,9 +238,10 @@ function scalar my_AR1 (const series y)
     return $coeff[2]	# return AR(1) coeff.
 end function 
 # Call
-matrix mbhat = rolling_ts(LRM, &quot;my_AR1&quot;, wsize, 0)
+matrix mbhat = rolling_ts(LRM, &quot;my_AR1&quot;, wsize, recursive)
 series bhat = rvec2series(LRM, mbhat, wsize)
 gnuplot bhat --with-lines --time-series --output=display
+
 
 
 #----------------------------
@@ -270,13 +260,14 @@ function matrices roll_bhat_ols (const list L)
 end function
 
 # Call the user-defined function
-list all = LRM const LRY		# list of the endogenous (1st entry) and regressors
-matrices Mout = rolling_ts_list(all, &quot;roll_bhat_ols&quot;, wsize)
-matrix mbhat = Mout[1]'				# grab rolling point estimates
-strings regnames = varnames(all[2:])# grab names of regressors
-cnameset(mbhat, regnames)			# name the columns
-matrix stderr = Mout[2]'			# grab rolling std. errors
-cnameset(stderr, regnames)	# name the columns
+list all = LRM const LRY				# list of the endogenous (1st entry) and regressors
+matrices Mout = null					# put point estimates and std. errors into matrix array
+matrix mat = rolling_ts(all, &quot;roll_bhat_ols&quot;, wsize, recursive, &amp;Mout)	# see the point form for Mout
+matrix mbhat = Mout[1]'					# grab rolling point estimates
+strings regnames = varnames(all[2:])	# grab names of regressors
+cnameset(mbhat, regnames)				# name the columns
+matrix stderr = Mout[2]'				# grab rolling std. errors
+cnameset(stderr, regnames)				# name the columns
 printf &quot;\nRolling window estimation results:&quot;
 print mbhat
 #print stderr
