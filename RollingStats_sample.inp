@@ -1,10 +1,13 @@
 set verbose off
 include RollingStats.gfn --force
 
-open denmark.gdt -q
+open denmark.gdt -q	# load some time-series dataset
 
-scalar wsize = 22	# window lenght
+scalar wsize = 22	# set window lenght
 
+#----------------------
+# (A) Use of rolling_ts
+#----------------------
 # Skewness
 matrix mSK = rolling_ts(LRM, "skewness", wsize)
 series SK = rvec2series(LRM, mSK, wsize)
@@ -14,9 +17,7 @@ print SK -o
 series MIN = rvec2series(LRM, rolling_ts(LRM, "min", wsize), wsize)
 print MIN -o
 
-
 # Call your own user-defined function
-#-------------------------------------
 # AR(1)-coefficient over time (w.o. intercept in the regression)
 function scalar my_AR1 (const series y)
     ols y const y(-1) --quiet
@@ -26,3 +27,39 @@ end function
 matrix mbhat = rolling_ts(LRM, "my_AR1", wsize, 0)
 series bhat = rvec2series(LRM, mbhat, wsize)
 gnuplot bhat --with-lines --time-series --output=display
+
+
+#----------------------------
+# (B) Use of rolling_ts_list
+#----------------------------
+function matrices roll_bhat_ols (const list L)
+    # Compute rolling OLS beta-coefficients
+    # and standard errors
+    series y = L[1]		# we expected the 1st entry being the endogenous
+    L -= L[1]
+    ols y L --quiet
+    matrices M = array(2)
+    M[1] = $coeff
+    M[2] = $stderr
+    return M
+end function
+
+# Call the user-defined function
+list all = LRM const LRY		# list of the endogenous (1st entry) and regressors
+matrices Mout = rolling_ts_list(all, "roll_bhat_ols", wsize)
+matrix mbhat = Mout[1]'				# grab rolling point estimates
+strings regnames = varnames(all[2:])# grab names of regressors
+cnameset(mbhat, regnames)			# name the columns
+matrix stderr = Mout[2]'			# grab rolling std. errors
+cnameset(stderr, regnames)	# name the columns
+printf "\nRolling window estimation results:"
+print mbhat
+#print stderr
+
+# Transform each point estimate vector into a series
+loop i=1..cols(mbhat) -q
+    series Ser$i = rvec2series(LRM, mbhat[,i], wsize)
+    string vnam = regnames[i]	
+    setinfo Ser$i --graph-name="beta(@vnam)"	# for showing name in graph
+endloop
+gnuplot Ser1 Ser2 --with-lines --time-series --output=display

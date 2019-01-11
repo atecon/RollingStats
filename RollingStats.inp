@@ -22,12 +22,42 @@ function matrix rolling_ts (series y "Series of interest",
     return ret
 end function
 
+function matrices rolling_ts_list (list y "List of interest",
+                            string op "Name of the function to call",
+                            int wsize[1::2] "Size of the moving window",
+                            bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
 
-function series rvec2series (series y "Series of interest",
+    # rolling_ts -- Rolling Time-series Statistics
+    smpl --no-missing y
+    scalar nsteps = $nobs - wsize + 1    
+    smpl $t1 ($t1+wsize-1)
+
+    loop i=1..nsteps -q        
+        matrices mat = feval(op, y)		# call function
+        matrices ret = (i==1) ? array(nelem(mat)) : ret 	# for storing final results        
+        # update each matrix in matrices
+        loop j=1..nelem(mat) -q
+            ret[j] ~= mat[j]	# grab last version of j-th matrix in ret
+            matrix m = ret[j]
+            ret[j] = m		# update j-th matrix in ret
+        endloop
+        if i<nsteps
+            if recursive==1
+                smpl ; +1
+            else
+                smpl +1 +1
+            endif
+        endif
+    endloop
+    return ret
+end function
+
+function series rvec2series (series y "Reference series",
                              matrix ret "Computed vector",
                              int wsize[1::2] "Size of the moving window")
     # transform 'ret' into series
-    smpl y --no-missing --replace
+    # y is needed to market that ret has the correct date
+    smpl y --no-missing
     smpl ($t1+wsize-1) $t2
     ret = vec(ret)
     if nobs(y) != rows(ret)
