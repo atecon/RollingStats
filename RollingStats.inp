@@ -1,4 +1,4 @@
-function matrix rolling_ts (series y "Series of interest",
+function matrix rolling_ts (list y "List of series of interest",
                             string op "Name of the function to call",
                             int wsize[1::2] "Size of the moving window",
                             bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")
@@ -22,7 +22,7 @@ function matrix rolling_ts (series y "Series of interest",
     return ret
 end function
 
-function matrices rolling_ts_list (list y "List of interest",
+function matrices rolling_ts_list (list y "List of series of interest",
                             string op "Name of the function to call",
                             int wsize[1::2] "Size of the moving window",
                             bool recursive[0] "Recursive (expanding) window (default 0, rolling window)")

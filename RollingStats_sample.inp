@@ -1,6 +1,6 @@
 set verbose off
-include RollingStats.gfn --force
-
+#include RollingStats.gfn --force
+include /home/at/git/Rolling_Stats/RollingStats.gfn --force
 open denmark.gdt -q	# load some time-series dataset
 
 scalar wsize = 22	# set window lenght
