@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
 <gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2020c">
-<author email="atecon@cryptolab.net">Artur Tarassow</author>
+<author email="atecon@posteo.de">Artur Tarassow</author>
 <version>0.9</version>
 <date>2021-04-04</date>
 <description>Compute moving-window statistics</description>
