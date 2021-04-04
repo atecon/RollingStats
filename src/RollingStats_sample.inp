@@ -1,0 +1,85 @@
+clear
+set verbose off
+
+include RollingStats.gfn
+open denmark.gdt -q		# load some time-series dataset
+
+# Set parameters
+# ==============
+scalar WSIZE = 22		         # set window length
+# Moving-window type: FALSE=fixed window length, TRUE=expanding window
+scalar RECURSIVE_WINDOW = FALSE
+
+RUN_EXAMPLE = 2
+
+
+if RUN_EXAMPLE == 1
+    # Call moving_stats()
+    #---------------------
+    matrix mSK = moving_stats(LRM, "min", WSIZE)
+    series SK = rvec2series(mSK, WSIZE)
+    print SK -o --range=50:
+
+    # Skewness
+    matrix mSK = moving_stats(LRM, "skewness", WSIZE)
+    series SK = rvec2series(mSK, WSIZE)
+    print SK -o --range=50:
+
+    # Minimum -- "one-liner"
+    series MIN = rvec2series(moving_stats(LRM, "min", WSIZE,\
+        RECURSIVE_WINDOW), WSIZE)
+    print MIN -o --range=50:
+
+
+    # Call your own user-defined function
+    # AR(1)-coefficient over time (w.o. intercept in the regression)
+    function scalar my_AR1 (const series y)
+        ols y const y(-1) --quiet
+        return $coeff[2]	# return AR(1) coefficient only
+    end function
+
+    matrix mbhat = moving_stats(LRM, "my_AR1", WSIZE, RECURSIVE_WINDOW)
+    series bhat = rvec2series(mbhat, WSIZE)
+    gnuplot bhat --with-lines --time-series --output=display
+
+
+elif RUN_EXAMPLE == 2
+    # Call moving_stats_array()
+    #--------------------------
+
+    # User-defined function
+    function matrices roll_bhat_ols (list L)
+        # Compute rolling OLS beta-coefficients and standard errors
+
+        series y = L[1]		# we expected the 1st entry being the endogenous
+        L -= L[1]
+        ols y L --quiet
+        matrices M = array(2)
+        M[1] = $coeff
+        M[2] = $stderr
+        return M
+    end function
+
+    # list of the endogenous (1st entry) and regressors
+    list all = LRM const LRY
+
+    # put point estimates and std. errors into matrix array
+    matrices Mout = moving_stats_array(all, "roll_bhat_ols", WSIZE,\
+        RECURSIVE_WINDOW)
+
+    matrix mbhat = Mout[1]  				# grab rolling point estimates
+    strings regnames = varnames(all[2:])	# grab names of regressors
+    cnameset(mbhat, regnames)				# name the columns
+
+    printf "\nRolling window estimation results:\n"
+
+    # Transform each point estimate vector into a series
+    list L = null
+    loop i=1..cols(mbhat) -q
+        L += genseries(sprintf("Ser%d", $i), rvec2series(mbhat[, i], WSIZE))
+        string vnam = regnames[i]
+        setinfo Ser$i --graph-name="beta(@vnam)"
+    endloop
+
+    scatters L --with-lines --time-series --output=display
+endif

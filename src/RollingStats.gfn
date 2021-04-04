@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-functions>
+<gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2020c">
+<author email="atecon@cryptolab.net">Artur Tarassow</author>
+<version>0.9</version>
+<date>2021-04-04</date>
+<description>Compute moving-window statistics</description>
+<tags>C10</tags>
+<label>Rolling Time-series Stats</label>
+<menu-attachment>MAINWIN/Add</menu-attachment>
+<help>
+This package is for computing moving-window statistics.
+Currently only time-series datasets are supported.
+
+
+Public functions
+*****************
+
+moving_stats(const list y, const string operator, int wsize[1::2],
+             bool recursive[0])
+-------------------------------------------------------------------
+This function allows the user to compute specific statistics in either a
+'rolling' (fixed, shifting window through time) or 'recursive' (expanding
+window through time) manner.
+
+In principle all -- both built-in as well as user-defined functions
+-- can be called which have a scalar value as its outcome.
+
+Input:
+------
+list y:             list, Series for which to compute statistics
+string operation:   string, Name of the function to call
+wsize:              integer, Size of the moving window (optional, default 2)
+recursive:      	bool, 0: rolling-window (default), 1: recursive
+                    (expanding) window
+
+Return:
+An R by k matrix where R refers to the number of moving windows and k is
+some output vector returned by the operation 'op' is returned.
+
+
+moving_stats_array(const list y, const string operator, int wsize[1::2],
+                   bool recursive[0])
+-------------------------------------------------------------------
+This function allows the user to compute specific statistics in either a
+'rolling' (fixed, shifting window through time) or 'recursive' (expanding
+window through time) manner.
+
+In principle all -- both built-in as well as user-defined functions
+-- can be called which have a scalar value as its outcome.
+
+Input:
+------
+list y:             list, Series for which to compute statistics
+string operation:   string, Name of the function to call
+wsize:              integer, Size of the moving window (optional, default 2)
+recursive:      	bool, 0: rolling-window (default), 1: recursive
+                    (expanding) window
+
+Return:
+Matrix array of length n where n refers to the returned arrays of
+'operation'. Each array comprises an R by k matrix where R refers to the
+number of moving windows and k is some output vector returned by the
+operation 'op' is returned.
+
+
+rvec2series(const matrix m, int wsize)
+-----------------------------------
+Transforms an R by 1 vector into a series. For a list of series, use a
+loop calling rvec2series() multiple times instead.
+
+Input:
+-------
+matrix m:           matrix, R by 1 vector
+wsize:              integer, Size of the moving window
+
+Return:
+-------
+Series of moving-window based statistics.
+
+
+
+CHANGELOG
+0.9: April 2021
++ Changed user-interface
+    - Replace rolling_ts() function by the new functions moving_stats()
+      and moving_stats_array(), respectively.
+    - Remove first unnecessary argument of rvec2series() function.
+    - Internal improvements
+
+0.2: Jan., 2019
++ Work on rolling_ts():
+	- 'y' can be a list of series now
+	- the output matrix can be a matrix of size R by n
+	instead of R by 1
+	- the user may provide a matrix array in pointer form
+	for storing multiple matrices returned by some
+	user-defined function
+	+ update the sample script and manual script accordingly
+
+0.1: Nov., 2018
++ initial public version
+</help>
+<gretl-function name="moving_stats" type="matrix">
+ <params count="4">
+  <param name="y" type="list" const="true">
+<description>List of series of interest</description>
+  </param>
+  <param name="operation" type="string" const="true">
+<description>Function to call</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+  <param name="recursive" type="bool" default="0">
+<description>Recursive window</description>
+  </param>
+ </params>
+<code>/* Compute moving statistics and return as matrix. */
+bundle B = compute_moving_stats(y, operation, wsize, recursive)
+return B.ret
+</code>
+</gretl-function>
+<gretl-function name="moving_stats_array" type="matrices">
+ <params count="4">
+  <param name="y" type="list" const="true">
+<description>List of series of interest</description>
+  </param>
+  <param name="operation" type="string" const="true">
+<description>Function to call</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+  <param name="recursive" type="bool" default="0">
+<description>Recursive window</description>
+  </param>
+ </params>
+<code>/* Compute moving statistics and return as matrix array. */
+bundle B = compute_moving_stats(y, operation, wsize, recursive)
+return B.ret
+</code>
+</gretl-function>
+<gretl-function name="rvec2series" type="series">
+ <params count="2">
+  <param name="mat" type="matrix" const="true">
+<description>Information matrix, rows. mov. windows, cols: vars</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Moving-window size</description>
+  </param>
+ </params>
+<code>/* Transform each column of 'mat' into a series. */
+smpl ($t1 + wsize - 1) $t2
+errorif($nobs != rows(mat), &quot;Number of observations of active dataset and the matrix are of different length.&quot;)
+series S = mat
+setinfo S --description=&quot;rolling_ts() statistics&quot;
+setinfo S --graph-name=&quot;rolling_ts() statistics&quot;
+return S
+</code>
+</gretl-function>
+<gretl-function name="moving_stats_gui" type="series" menu-only="1" pkg-role="gui-main">
+ <params count="4">
+  <param name="y" type="series" const="true">
+<description>Series of interest</description>
+  </param>
+  <param name="operation" type="string" const="true">
+<description>Name of the function</description>
+  </param>
+  <param name="wsize" type="int" min="1" default="2">
+<description>Size of the moving window</description>
+  </param>
+  <param name="recursive" type="bool" default="0">
+<description>Recursive window</description>
+  </param>
+ </params>
+<code>/* */
+series S = rvec2series(moving_stats(y, operation, wsize, recursive), wsize)
+print &quot;Series computed.&quot;
+return S
+</code>
+</gretl-function>
+<gretl-function name="compute_moving_stats" type="bundle" private="1">
+ <params count="4">
+  <param name="y" type="list" const="true"/>
+  <param name="operation" type="string" const="true"/>
+  <param name="wsize" type="int" min="1" default="2"/>
+  <param name="recursive" type="bool" default="0"/>
+ </params>
+<code>/*  Actual computation is done here. */
+scalar T = $nobs
+smpl y --no-missing
+if $nobs &lt; T
+  printf &quot;\nWarning: Remove %d missing values.\n&quot;, (T - $nobs)
+endif
+if nelem(y) == 1
+  series Y = y[1]
+else
+  list Y = y
+endif
+scalar nsteps = $nobs - wsize + 1
+smpl $t1 ($t1 + wsize - 1)
+loop i=1..nsteps -q
+  out = feval(operation, Y)
+  if i == 1       # Determine type of &quot;out&quot;
+    string dtype = typestr(typeof(out))
+    if dtype == &quot;matrix&quot;
+      matrix ret = mshape(NA, nsteps, cols(out))
+    elif dtype ==  &quot;scalar&quot;
+      matrix ret = mshape(NA, nsteps, 1)
+    elif dtype == &quot;array&quot;
+      matrices ret = array(nelem(out))
+    else
+      funcerr &quot;Operation returned unsupported datatype.&quot;
+    endif
+  endif
+  if dtype == &quot;array&quot;
+    loop j=1..nelem(out) -q
+      ret[j] |= out[j]'      # concatenate each array element
+    endloop
+  elif dtype == &quot;matrix&quot; || dtype == &quot;scalar&quot;
+    ret[i,] = vec(out)'
+  endif
+  if i &lt; nsteps
+    if recursive == 1
+      smpl ; +1
+    else
+      smpl +1 +1
+    endif
+  endif
+endloop
+return _(ret)
+</code>
+</gretl-function>
+<sample-script>
+clear
+set verbose off
+
+include RollingStats.gfn
+open denmark.gdt -q		# load some time-series dataset
+
+# Set parameters
+# ==============
+scalar WSIZE = 22		         # set window length
+# Moving-window type: FALSE=fixed window length, TRUE=expanding window
+scalar RECURSIVE_WINDOW = FALSE
+
+RUN_EXAMPLE = 2
+
+
+if RUN_EXAMPLE == 1
+    # Call moving_stats()
+    #---------------------
+    matrix mSK = moving_stats(LRM, &quot;min&quot;, WSIZE)
+    series SK = rvec2series(mSK, WSIZE)
+    print SK -o --range=50:
+
+    # Skewness
+    matrix mSK = moving_stats(LRM, &quot;skewness&quot;, WSIZE)
+    series SK = rvec2series(mSK, WSIZE)
+    print SK -o --range=50:
+
+    # Minimum -- &quot;one-liner&quot;
+    series MIN = rvec2series(moving_stats(LRM, &quot;min&quot;, WSIZE,\
+        RECURSIVE_WINDOW), WSIZE)
+    print MIN -o --range=50:
+
+
+    # Call your own user-defined function
+    # AR(1)-coefficient over time (w.o. intercept in the regression)
+    function scalar my_AR1 (const series y)
+        ols y const y(-1) --quiet
+        return $coeff[2]	# return AR(1) coefficient only
+    end function
+
+    matrix mbhat = moving_stats(LRM, &quot;my_AR1&quot;, WSIZE, RECURSIVE_WINDOW)
+    series bhat = rvec2series(mbhat, WSIZE)
+    gnuplot bhat --with-lines --time-series --output=display
+
+
+elif RUN_EXAMPLE == 2
+    # Call moving_stats_array()
+    #--------------------------
+
+    # User-defined function
+    function matrices roll_bhat_ols (list L)
+        # Compute rolling OLS beta-coefficients and standard errors
+
+        series y = L[1]		# we expected the 1st entry being the endogenous
+        L -= L[1]
+        ols y L --quiet
+        matrices M = array(2)
+        M[1] = $coeff
+        M[2] = $stderr
+        return M
+    end function
+
+    # list of the endogenous (1st entry) and regressors
+    list all = LRM const LRY
+
+    # put point estimates and std. errors into matrix array
+    matrices Mout = moving_stats_array(all, &quot;roll_bhat_ols&quot;, WSIZE,\
+        RECURSIVE_WINDOW)
+
+    matrix mbhat = Mout[1]  				# grab rolling point estimates
+    strings regnames = varnames(all[2:])	# grab names of regressors
+    cnameset(mbhat, regnames)				# name the columns
+
+    printf &quot;\nRolling window estimation results:\n&quot;
+
+    # Transform each point estimate vector into a series
+    list L = null
+    loop i=1..cols(mbhat) -q
+        L += genseries(sprintf(&quot;Ser%d&quot;, $i), rvec2series(mbhat[, i], WSIZE))
+        string vnam = regnames[i]
+        setinfo Ser$i --graph-name=&quot;beta(@vnam)&quot;
+    endloop
+
+    scatters L --with-lines --time-series --output=display
+endif
+</sample-script>
+</gretl-function-package>
+</gretl-functions>

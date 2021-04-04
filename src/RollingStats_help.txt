@@ -1,0 +1,92 @@
+This package is for computing moving-window statistics.
+Currently only time-series datasets are supported.
+
+
+Public functions
+*****************
+
+moving_stats(const list y, const string operator, int wsize[1::2],
+             bool recursive[0])
+-------------------------------------------------------------------
+This function allows the user to compute specific statistics in either a
+'rolling' (fixed, shifting window through time) or 'recursive' (expanding
+window through time) manner.
+
+In principle all -- both built-in as well as user-defined functions
+-- can be called which have a scalar value as its outcome.
+
+Input:
+------
+list y:             list, Series for which to compute statistics
+string operation:   string, Name of the function to call
+wsize:              integer, Size of the moving window (optional, default 2)
+recursive:      	bool, 0: rolling-window (default), 1: recursive
+                    (expanding) window
+
+Return:
+An R by k matrix where R refers to the number of moving windows and k is
+some output vector returned by the operation 'op' is returned.
+
+
+moving_stats_array(const list y, const string operator, int wsize[1::2],
+                   bool recursive[0])
+-------------------------------------------------------------------
+This function allows the user to compute specific statistics in either a
+'rolling' (fixed, shifting window through time) or 'recursive' (expanding
+window through time) manner.
+
+In principle all -- both built-in as well as user-defined functions
+-- can be called which have a scalar value as its outcome.
+
+Input:
+------
+list y:             list, Series for which to compute statistics
+string operation:   string, Name of the function to call
+wsize:              integer, Size of the moving window (optional, default 2)
+recursive:      	bool, 0: rolling-window (default), 1: recursive
+                    (expanding) window
+
+Return:
+Matrix array of length n where n refers to the returned arrays of
+'operation'. Each array comprises an R by k matrix where R refers to the
+number of moving windows and k is some output vector returned by the
+operation 'op' is returned.
+
+
+rvec2series(const matrix m, int wsize)
+-----------------------------------
+Transforms an R by 1 vector into a series. For a list of series, use a
+loop calling rvec2series() multiple times instead.
+
+Input:
+-------
+matrix m:           matrix, R by 1 vector
+wsize:              integer, Size of the moving window
+
+Return:
+-------
+Series of moving-window based statistics.
+
+
+
+CHANGELOG
+0.9: April 2021
++ Changed user-interface
+    - Replace rolling_ts() function by the new functions moving_stats()
+      and moving_stats_array(), respectively.
+    - Remove first unnecessary argument of rvec2series() function.
+    - Internal improvements
+
+0.2: Jan., 2019
++ Work on rolling_ts():
+	- 'y' can be a list of series now
+	- the output matrix can be a matrix of size R by n
+	instead of R by 1
+	- the user may provide a matrix array in pointer form
+	for storing multiple matrices returned by some
+	user-defined function
+	+ update the sample script and manual script accordingly
+
+0.1: Nov., 2018
++ initial public version
+

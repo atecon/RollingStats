@@ -1,0 +1,126 @@
+function matrices moving_stats_array (const list y "List of series of interest",
+                                      const string operation "Function to call",
+                                      int wsize[1::2] "Size of the moving window",
+                                      bool recursive[0] "Recursive window")
+    /* Compute moving statistics and return as matrix array. */
+
+    bundle B = compute_moving_stats(y, operation, wsize, recursive)
+
+    return B.ret
+end function
+
+
+function matrix moving_stats (const list y "List of series of interest",
+                              const string operation "Function to call",
+                              int wsize[1::2] "Size of the moving window",
+                              bool recursive[0] "Recursive window")
+    /* Compute moving statistics and return as matrix. */
+
+    bundle B = compute_moving_stats(y, operation, wsize, recursive)
+
+    return B.ret
+end function
+
+
+function bundle compute_moving_stats (const list y,
+                                      const string operation,
+                                      int wsize[1::2],
+                                      bool recursive[0])
+    /*  Actual computation is done here. */
+
+    scalar T = $nobs
+    smpl y --no-missing
+    if $nobs < T
+        printf "\nWarning: Remove %d missing values.\n", (T - $nobs)
+    endif
+
+    if nelem(y) == 1
+        series Y = y[1]
+    else
+        list Y = y
+    endif
+
+    scalar nsteps = $nobs - wsize + 1
+    smpl $t1 ($t1 + wsize - 1)
+
+    loop i=1..nsteps -q
+        out = feval(operation, Y)
+
+        if i == 1       # Determine type of "out"
+            string dtype = typestr(typeof(out))
+
+            if dtype == "matrix"
+                matrix ret = mshape(NA, nsteps, cols(out))
+            elif dtype ==  "scalar"
+                matrix ret = mshape(NA, nsteps, 1)
+            elif dtype == "array"
+                matrices ret = array(nelem(out))
+            else
+                funcerr "Operation returned unsupported datatype."
+            endif
+        endif
+
+        if dtype == "array"
+            loop j=1..nelem(out) -q
+                ret[j] |= out[j]'      # concatenate each array element
+            endloop
+        elif dtype == "matrix" || dtype == "scalar"
+            ret[i,] = vec(out)'
+        endif
+
+        if i < nsteps
+            if recursive == 1
+                smpl ; +1
+            else
+                smpl +1 +1
+            endif
+        endif
+    endloop
+
+    return _(ret)
+end function
+
+
+function series rvec2series (const matrix mat "Information matrix, rows. mov. windows, cols: vars", int wsize[1::2] "Moving-window size")
+    /* Transform each column of 'mat' into a series. */
+
+    smpl ($t1 + wsize - 1) $t2
+
+    errorif($nobs != rows(mat),\
+        "Number of observations of active dataset and the matrix are of different length.")
+
+    series S = mat
+    setinfo S --description="rolling_ts() statistics"
+    setinfo S --graph-name="rolling_ts() statistics"
+
+    return S
+end function
+
+
+function series moving_stats_gui (const series y "Series of interest",
+                                  const string operation "Name of the function",
+                                  int wsize[1::2] "Size of the moving window",
+                                  bool recursive[0] "Recursive window")
+    /* */
+    series S = rvec2series(moving_stats(y, operation, wsize,\
+                                        recursive), wsize)
+    print "Series computed."
+
+    return S
+end function
+
+/*
+   function matrix skew (matrix X)
+   # URL: http://de.mathworks.com/help/stats/skewness.html?requestedDomain=www.mathworks.com
+
+   matrix xbar = X.-meanc(X)
+   scalar A = 1/rows(X) .* sumc(xbar.^3)
+   scalar B = ( sqrt(1/rows(X) .* sumc(xbar.^2) )).^3
+   scalar S1 = A/B
+   scalar S0a = sqrt(rows(X)*(rows(X)-1))
+   scalar S0b = rows(X)-2
+   S0 = S0a*S1/S0b				# bias-corrected formula, ==gretl's default
+
+   return S0~S1
+   end function
+*/
