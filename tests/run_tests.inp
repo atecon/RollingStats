@@ -1,0 +1,10 @@
+set verbose off
+clear
+set assert stop
+
+include "./src/RollingStats.inp"
+include assertion.gfn
+
+
+
+printf "\nInfo: All tests passed.\n"
