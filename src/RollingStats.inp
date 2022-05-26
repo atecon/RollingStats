@@ -1,7 +1,7 @@
-function matrices moving_stats_array (const list y "List of series of interest",
+function matrices moving_stats_array (const list y "Target series",
                                       const string operation "Function to call",
-                                      int wsize[1::2] "Size of the moving window",
-                                      bool recursive[0] "Recursive window")
+                                      int wsize[1::2] "Size of the moving-window",
+                                      bool recursive[0] "Do recursive window")
     /* Compute moving statistics and return as matrix array. */
 
     bundle B = compute_moving_stats(y, operation, wsize, recursive)
@@ -81,7 +81,8 @@ function bundle compute_moving_stats (const list y,
 end function
 
 
-function series rvec2series (const matrix mat "Information matrix, rows. mov. windows, cols: vars", int wsize[1::2] "Moving-window size")
+function series rvec2series (const matrix mat "Rows. mov. windows, Cols: vars",
+                             int wsize[1::2] "Moving-window size")
     /* Transform each column of 'mat' into a series. */
 
     smpl ($t1 + wsize - 1) $t2
@@ -102,9 +103,9 @@ function series moving_stats_gui (const series y "Series of interest",
                                   int wsize[1::2] "Size of the moving window",
                                   bool recursive[0] "Recursive window")
     /* */
-    series S = rvec2series(moving_stats(y, operation, wsize,\
-                                        recursive), wsize)
-    print "Series computed."
+    series S = rvec2series(moving_stats(y, operation, wsize, recursive),\
+                           wsize)
+    print "Series succesfully computed."
 
     return S
 end function

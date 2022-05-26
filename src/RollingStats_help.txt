@@ -1,5 +1,10 @@
-This package is for computing moving-window statistics.
+This package is for computing statistics in a moving-window manner.
 Currently only time-series datasets are supported.
+
+Please ask questions and report bugs on the gretl mailing list if possible.
+Alternatively, create an issue ticket on the github repo (see below).
+Source code and test script(s) can be found here:
+https://github.com/atecon/RollingStats
 
 
 Public functions
@@ -8,19 +13,16 @@ Public functions
 moving_stats(const list y, const string operator, int wsize[1::2],
              bool recursive[0])
 -------------------------------------------------------------------
-This function allows the user to compute specific statistics in either a
-'rolling' (fixed, shifting window through time) or 'recursive' (expanding
-window through time) manner.
+This function allows the user to compute specific statistics in either a 'rolling' (fixed, shifting window through time) or 'recursive' (expanding window through time) manner.
 
-In principle all -- both built-in as well as user-defined functions
--- can be called which have a scalar value as its outcome.
+In principle all -- both built-in as well as user-defined functions -- can be called which have a scalar value as its outcome.
 
 Input:
 ------
 list y:             list, Series for which to compute statistics
 string operation:   string, Name of the function to call
 wsize:              integer, Size of the moving window (optional, default 2)
-recursive:      	bool, 0: rolling-window (default), 1: recursive
+recursive:          bool, 0: rolling-window (default), 1: recursive
                     (expanding) window
 
 Return:
@@ -43,7 +45,7 @@ Input:
 list y:             list, Series for which to compute statistics
 string operation:   string, Name of the function to call
 wsize:              integer, Size of the moving window (optional, default 2)
-recursive:      	bool, 0: rolling-window (default), 1: recursive
+recursive:          bool, 0: rolling-window (default), 1: recursive
                     (expanding) window
 
 Return:
@@ -69,7 +71,8 @@ Series of moving-window based statistics.
 
 
 
-CHANGELOG
+Change-log
+==========
 0.9: April 2021
 + Changed user-interface
     - Replace rolling_ts() function by the new functions moving_stats()
@@ -89,4 +92,3 @@ CHANGELOG
 
 0.1: Nov., 2018
 + initial public version
-

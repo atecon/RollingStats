@@ -10,7 +10,7 @@ scalar WSIZE = 22		         # set window length
 # Moving-window type: FALSE=fixed window length, TRUE=expanding window
 scalar RECURSIVE_WINDOW = FALSE
 
-RUN_EXAMPLE = 2
+RUN_EXAMPLE = 3
 
 
 if RUN_EXAMPLE == 1
@@ -82,4 +82,14 @@ elif RUN_EXAMPLE == 2
     endloop
 
     scatters L --with-lines --time-series --output=display
+
+
+
+elif RUN_EXAMPLE == 3
+    open bikesharing --quiet --preserve
+
+    matrix mout = moving_stats(temp, "min", WSIZE)
+    series min = rvec2series(mout, WSIZE)
+    gnuplot min --with-lines --time-series --output=display
+
 endif
