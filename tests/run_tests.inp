@@ -36,7 +36,6 @@ end function
 test_data_has_missings(Params, dataset)
 
 
-
 nulldata 3
 
 bundles Params = null
@@ -62,5 +61,20 @@ function void test_get_nsteps (const bundles P)
     endloop
 end function
 test_get_nsteps(Params)
+
+
+open bikesharing.gdt --quiet
+smpl time <= 21 --restrict --permanent
+print obslabel($t1)
+print obslabel($t2)
+
+bundle B = rolling(casual, "mean", 7)
+matrix results = B.results
+print results
+
+
+
+
+
 
 printf "\nInfo: All tests passed.\n"

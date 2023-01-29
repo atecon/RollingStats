@@ -37,56 +37,57 @@ function bundle rolling (const list L "Target series",
         return self
     endif
 
-    if nelem(L) == 1
-        series Y = y[1]
-    else
-        list Y = y
-    endif
-    self.Y = Y
-
     self.nsteps = get_nsteps(self.wsize)
 
-    bundle B = compute_moving_stats(y, operation, wsize, recursive)
+    compute_moving_stats(L, &self)
 
-    return B.ret
+    return self
 end function
 
 
-function bundle compute_moving_stats (const list y,
-                                      const string operation,
-                                      int wsize[1::2],
-                                      bool recursive[0])
+function bundle compute_moving_stats (const list L,
+                                      bundle *self)
     /*  Actual computation is done here. */
 
-    smpl $t1 ($t1 + wsize - 1)
+    # Initial sample
+    if nelem(L) == 1
+        series Y = L[1]
+    else
+        list Y = L
+    endif
 
-    loop i=1..nsteps -q
-        out = feval(operation, Y)
+    smpl $t1 ($t1 + self.wsize - 1)
+    strings self.dates = array(self.nsteps)
 
-        if i == 1       # Determine type of "out"
+    loop i=1..self.nsteps
+        out = feval(self.operation, Y)
+        self.dates[i] = obslabel($t2)
+
+        if i == 1
             string dtype = typestr(typeof(out))
 
+            # TODO: put into separate function
             if dtype == "matrix"
-                matrix ret = mshape(NA, nsteps, cols(out))
+                matrix self.results = mshape(NA, self.nsteps, cols(out))
             elif dtype ==  "scalar"
-                matrix ret = mshape(NA, nsteps, 1)
+                matrix self.results = mshape(NA, self.nsteps, 1)
             elif dtype == "array"
-                matrices ret = array(nelem(out))
+                matrices self.results = array(nelem(out))
             else
                 funcerr "Operation returned unsupported datatype."
             endif
         endif
 
         if dtype == "array"
-            loop j=1..nelem(out) -q
-                ret[j] |= out[j]'      # concatenate each array element
+            loop j=1..nelem(out)
+                self.results[j] |= out[j]'      # concatenate each array element
             endloop
         elif dtype == "matrix" || dtype == "scalar"
-            ret[i,] = vec(out)'
+            self.results[i,] = vec(out)'
         endif
 
-        if i < nsteps
-            if recursive == 1
+        if i < self.nsteps
+            if self.expanding
                 smpl ; +1
             else
                 smpl +1 +1
@@ -94,7 +95,9 @@ function bundle compute_moving_stats (const list y,
         endif
     endloop
 
-    return _(ret)
+    rnameset(self.results, self.dates)
+
+    return self
 end function
 
 
@@ -118,9 +121,9 @@ end function
 function series moving_stats_gui (const series y "Series of interest",
                                   const string operation "Name of the function",
                                   int wsize[1::2] "Size of the moving window",
-                                  bool recursive[0] "Recursive window")
+                                  bool expanding[0] "Recursive window")
     /* */
-    series S = rvec2series(moving_stats(y, operation, wsize, recursive),\
+    series S = rvec2series(moving_stats(y, operation, wsize, expanding),\
                            wsize)
     print "Series succesfully computed."
 
