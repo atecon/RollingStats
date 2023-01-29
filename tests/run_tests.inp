@@ -19,7 +19,6 @@ Params = Params + _(L = L, expected = FALSE)
 Params = Params + _(L = L_wmiss_1, expected = TRUE)
 Params = Params + _(L = L_wmiss_2, expected = TRUE)
 
-
 function void test_data_has_missings (const bundles P, list L)
     print "Start testing function data_has_missings()."
 
@@ -38,8 +37,30 @@ test_data_has_missings(Params, dataset)
 
 
 
+nulldata 3
+
+bundles Params = null
+Params = Params + _(wsize = $nobs, expected = 1)
+Params = Params + _(wsize = ($nobs - 1), expected = 2)
+Params = Params + _(wsize = ($nobs + 1), expected = 47)
 
 
+function void test_get_nsteps (const bundles P)
+    print "Start testing function get_nsteps()."
 
+    loop foreach i P
+        # Given + When
+        catch scalar actual = get_nsteps(P[i].wsize)
+        error = $error
+
+        # Then
+        if !error
+            assert(actual == P[i].expected)
+        else
+            assert(error == P[i].expected)
+        endif
+    endloop
+end function
+test_get_nsteps(Params)
 
 printf "\nInfo: All tests passed.\n"

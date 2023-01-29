@@ -11,19 +11,40 @@ function scalar data_has_missings (const list L)
     return has_missings
 end function
 
+
+function scalar get_nsteps (const int wsize)
+    /* Compute number of interations. */
+
+    nsteps = $nobs - wsize + 1
+    errorif(nsteps <= 0, "Not enough observations for selected window length.")
+
+    return nsteps
+end function
+
+
 # TODO: make use of the generic feature: y could be a series or list (maybe even matrix?)
+# TODO: I do not want to have a 4 argument function
 function bundle rolling (const list L "Target series",
                          const string operation "Function to call",
                          int wsize[1::2] "Length of the window",
                          bool expanding[FALSE] "Do expanding window")
     /* Compute moving statistics. */
 
-    bundle self = _(T = $nobs, error = FALSE)
+    bundle self = _(T = $nobs, error = FALSE, operation, wsize, expanding)
     scalar self.error = data_has_missings(L)
 
     if self.error
         return self
     endif
+
+    if nelem(L) == 1
+        series Y = y[1]
+    else
+        list Y = y
+    endif
+    self.Y = Y
+
+    self.nsteps = get_nsteps(self.wsize)
 
     bundle B = compute_moving_stats(y, operation, wsize, recursive)
 
@@ -37,14 +58,6 @@ function bundle compute_moving_stats (const list y,
                                       bool recursive[0])
     /*  Actual computation is done here. */
 
-
-    if nelem(y) == 1
-        series Y = y[1]
-    else
-        list Y = y
-    endif
-
-    scalar nsteps = $nobs - wsize + 1
     smpl $t1 ($t1 + wsize - 1)
 
     loop i=1..nsteps -q
