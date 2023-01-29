@@ -1,20 +1,29 @@
-function matrices moving_stats_array (const list y "Target series",
-                                      const string operation "Function to call",
-                                      int wsize[1::2] "Size of the moving-window",
-                                      bool recursive[0] "Do recursive window")
-    /* Compute moving statistics and return as matrix array. */
+function scalar data_has_missings (const list L)
+    /* code description
+    return: type, description */
 
-    bundle B = compute_moving_stats(y, operation, wsize, recursive)
+    has_missings = sum(missing(L))
+    if has_missings
+        print "ERROR: Some of the series has missing values. Remove first."
+    endif
+    scalar has_missings == FALSE ? FALSE : TRUE
 
-    return B.ret
+    return has_missings
 end function
 
+# TODO: make use of the generic feature: y could be a series or list (maybe even matrix?)
+function bundle rolling (const list L "Target series",
+                         const string operation "Function to call",
+                         int wsize[1::2] "Length of the window",
+                         bool expanding[FALSE] "Do expanding window")
+    /* Compute moving statistics. */
 
-function matrix moving_stats (const list y "List of series of interest",
-                              const string operation "Function to call",
-                              int wsize[1::2] "Size of the moving window",
-                              bool recursive[0] "Recursive window")
-    /* Compute moving statistics and return as matrix. */
+    bundle self = _(T = $nobs, error = FALSE)
+    scalar self.error = data_has_missings(L)
+
+    if self.error
+        return self
+    endif
 
     bundle B = compute_moving_stats(y, operation, wsize, recursive)
 
@@ -28,11 +37,6 @@ function bundle compute_moving_stats (const list y,
                                       bool recursive[0])
     /*  Actual computation is done here. */
 
-    scalar T = $nobs
-    smpl y --no-missing
-    if $nobs < T
-        printf "\nWarning: Remove %d missing values.\n", (T - $nobs)
-    endif
 
     if nelem(y) == 1
         series Y = y[1]

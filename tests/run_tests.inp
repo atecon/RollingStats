@@ -6,5 +6,40 @@ include "./src/RollingStats.inp"
 include assertion.gfn
 
 
+nulldata 3
+series y = normal()
+series y_wmiss = normal()
+series y_wmiss[2] = NA
+list L = y
+list L_wmiss_1 = y_wmiss
+list L_wmiss_2 = y y_wmiss
+
+bundles Params = null
+Params = Params + _(L = L, expected = FALSE)
+Params = Params + _(L = L_wmiss_1, expected = TRUE)
+Params = Params + _(L = L_wmiss_2, expected = TRUE)
+
+
+function void test_data_has_missings (const bundles P, list L)
+    print "Start testing function data_has_missings()."
+
+    loop foreach i P
+        # Given
+        list y = P[i].L
+
+        # When
+        scalar actual = data_has_missings(y)
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_data_has_missings(Params, dataset)
+
+
+
+
+
+
 
 printf "\nInfo: All tests passed.\n"
