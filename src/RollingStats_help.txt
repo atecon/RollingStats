@@ -1,5 +1,5 @@
-This package is for computing statistics in a moving-window manner.
-Currently only time-series datasets are supported.
+This package is for computing statistics in a moving-window manner. Currently
+only time-series datasets are supported.
 
 Please ask questions and report bugs on the gretl mailing list if possible.
 Alternatively, create an issue ticket on the github repo (see below).
@@ -8,71 +8,43 @@ https://github.com/atecon/RollingStats
 
 
 Public functions
-*****************
+=================
 
-moving_stats(const list y, const string operator, int wsize[1::2],
-             bool recursive[0])
+rolling (const series y, const string operation, int wsize[1::2],
+				 bool expanding[FALSE])
 -------------------------------------------------------------------
-This function allows the user to compute specific statistics in either a 'rolling' (fixed, shifting window through time) or 'recursive' (expanding window through time) manner.
-
-In principle all -- both built-in as well as user-defined functions -- can be called which have a scalar value as its outcome.
+This function computes some requested statistics in either a 'rolling'
+(fixed, shifting window through time) or expanding window through time manner.
 
 Input:
 ------
-list y:             list, Series for which to compute statistics
-string operation:   string, Name of the function to call
-wsize:              integer, Size of the moving window (optional, default 2)
-recursive:          bool, 0: rolling-window (default), 1: recursive
-                    (expanding) window
+y:             			series, Target for which to compute statistics
+operation:				  string, Name of the function to call
+wsize:              int, Length of the window (optional, default = 2)
+expanding:          bool, 0(=FALSE): rolling-window (default),
+										1 (=TRUE): expanding window
 
 Return:
-An R by k matrix where R refers to the number of moving windows and k is
-some output vector returned by the operation 'op' is returned.
+Bundle holding the following objects:
+  result:		Either a matrix or a matrix array. Both are of length R where R
+  					refers to the number of windows. The returned matrix may have k
+  					columns if the the requested operation returns a vector of length
+  					k.
+  obsnum:		Column vector holding the observation identifiers for each window
+  					considered. Each value refers to the last observation used for
+  					computation.
+  date:			String array holding the observation label for each window
+  					considered. Each value refers to the last observation date used for
+  					computation.
 
 
-moving_stats_array(const list y, const string operator, int wsize[1::2],
-                   bool recursive[0])
--------------------------------------------------------------------
-This function allows the user to compute specific statistics in either a
-'rolling' (fixed, shifting window through time) or 'recursive' (expanding
-window through time) manner.
-
-In principle all -- both built-in as well as user-defined functions
--- can be called which have a scalar value as its outcome.
-
-Input:
-------
-list y:             list, Series for which to compute statistics
-string operation:   string, Name of the function to call
-wsize:              integer, Size of the moving window (optional, default 2)
-recursive:          bool, 0: rolling-window (default), 1: recursive
-                    (expanding) window
-
-Return:
-Matrix array of length n where n refers to the returned arrays of
-'operation'. Each array comprises an R by k matrix where R refers to the
-number of moving windows and k is some output vector returned by the
-operation 'op' is returned.
-
-
-rvec2series(const matrix m, int wsize)
------------------------------------
-Transforms an R by 1 vector into a series. For a list of series, use a
-loop calling rvec2series() multiple times instead.
-
-Input:
--------
-matrix m:           matrix, R by 1 vector
-wsize:              integer, Size of the moving window
-
-Return:
--------
-Series of moving-window based statistics.
-
-
-
-Change-log
+Changelog
 ==========
+1.0: February 2023
++ Completely new user-interface
++ Only single series can be passed to the main function
++ Internal refactoring
+
 0.9: April 2021
 + Changed user-interface
     - Replace rolling_ts() function by the new functions moving_stats()
