@@ -7,12 +7,12 @@ open denmark.gdt -q		# load some time-series dataset
 RUN_EXAMPLE = 1
 
 
-if RUN_EXAMPLE == 1  # rolling-window case
+if RUN_EXAMPLE == 1  # moving_stats-window case
     series input = diff(LRM)
     smpl input --contiguous    # avoid missing values
 
     scalar WSIZE = 22                # set window length
-    bundle B = rolling(input, "mean", WSIZE)
+    bundle B = moving_stats(input, "mean", WSIZE)
     print B
 
     # Vector to series
@@ -26,7 +26,7 @@ elif RUN_EXAMPLE == 2  # expanding window
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 5                # set window length
-    bundle B = rolling(input, "mean", WSIZE, EXPANDING)
+    bundle B = moving_stats(input, "mean", WSIZE, EXPANDING)
     print B
 
     # Vector to series
@@ -36,7 +36,7 @@ elif RUN_EXAMPLE == 2  # expanding window
 
 elif RUN_EXAMPLE == 3
     # Call your own user-defined function which returns a scalar value
-    # AR(1)-coefficient over time (w.o. intercept in the regression)
+    # of the AR(1)-coefficient over time (w.o. intercept in the regression)
     function scalar my_AR1 (const series y)
         ols y const y(-1) --quiet
         return $coeff[2]	# return AR(1) coefficient only
@@ -44,7 +44,7 @@ elif RUN_EXAMPLE == 3
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 10                # set window length
-    bundle B = rolling(LRM, "my_AR1", WSIZE, EXPANDING)
+    bundle B = moving_stats(LRM, "my_AR1", WSIZE, EXPANDING)
 
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
@@ -53,7 +53,7 @@ elif RUN_EXAMPLE == 3
 
 elif RUN_EXAMPLE == 4
     # Call your own user-defined function which returns a matrix
-    # Coefficients over time
+    # of coefficients over time
     function matrix my_AR1 (const series y)
         ols y const y(-1) --quiet
         return $coeff
@@ -61,7 +61,7 @@ elif RUN_EXAMPLE == 4
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 10                # set window length
-    bundle B = rolling(LRM, "my_AR1", WSIZE, EXPANDING)
+    bundle B = moving_stats(LRM, "my_AR1", WSIZE, EXPANDING)
 
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample

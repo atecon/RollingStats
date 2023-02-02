@@ -10,32 +10,35 @@ https://github.com/atecon/RollingStats
 Public functions
 =================
 
-rolling (const series y, const string operation, int wsize[1::2],
-				 bool expanding[FALSE])
+moving_stats (const series y, const string operation, const int wsize[1::2],
+              const bool expanding[FALSE])
 -------------------------------------------------------------------
 This function computes some requested statistics in either a 'rolling'
 (fixed, shifting window through time) or expanding window through time manner.
 
 Input:
 ------
-y:             			series, Target for which to compute statistics
-operation:				  string, Name of the function to call
-wsize:              int, Length of the window (optional, default = 2)
-expanding:          bool, 0(=FALSE): rolling-window (default),
-										1 (=TRUE): expanding window
+y:           series, Target for which to compute the statistics
+operation:   string, Name of the function to call
+wsize:       int, Fixed number of observations used for each window
+             (optional, default = 2)
+expanding:   bool, Window function where 0(=FALSE) refers to a
+             rolling-window (default) and 1 (=TRUE) to an expanding window
 
 Return:
-Bundle holding the following objects:
-  result:		Either a matrix or a matrix array. Both are of length R where R
-  					refers to the number of windows. The returned matrix may have k
-  					columns if the the requested operation returns a vector of length
-  					k.
-  obsnum:		Column vector holding the observation identifiers for each window
-  					considered. Each value refers to the last observation used for
-  					computation.
-  date:			String array holding the observation label for each window
-  					considered. Each value refers to the last observation date used for
-  					computation.
+Bundle holding the following objects (among the input parameters):
+  date:   String array holding the observation label for each window
+          considered. Each value refers to the last observation date used for
+          computation.
+  nsteps: Number of windows used for estimation.
+  obsnum: Column vector holding the observation identifiers for each window
+          considered. Each value refers to the last observation used for
+          computation.
+  result: Either a matrix or a matrix array. Both are of length R where R
+          refers to the number of windows used for estimation. The returned
+          matrix may have k columns if the the requested operation returns a
+          vector of length k.
+  T:      Number of observations of the underlying sample
 
 
 Changelog

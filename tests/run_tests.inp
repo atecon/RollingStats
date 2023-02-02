@@ -60,7 +60,7 @@ test_get_nsteps(Params)
 open bikesharing.gdt --quiet
 
 function void test_rolling_moving_window (const series y)
-    print "Start testing function rolling() with moving window"
+    print "Start testing function moving_stats() with moving window"
 
     # Given
     smpl time <= 3 --restrict
@@ -70,7 +70,7 @@ function void test_rolling_moving_window (const series y)
     matrix expected_values = {231; 125.5}
 
     # When
-    bundle B = rolling(y, "mean", WSIZE)
+    bundle B = moving_stats(y, "mean", WSIZE)
     matrix actual_values = B.result
     matrix actual_obsnum = B.obsnum
     strings actual_date = rnameget(actual_values)
@@ -89,7 +89,7 @@ test_rolling_moving_window(casual)
 
 
 function void test_rolling_expanding_window (const series y)
-    print "Start testing function rolling() with expanding window"
+    print "Start testing function moving_stats() with expanding window"
 
     # Given
     smpl time <= 3 --restrict
@@ -100,7 +100,7 @@ function void test_rolling_expanding_window (const series y)
     matrix expected_values = {231; 194}
 
     # When
-    bundle B = rolling(y, "mean", WSIZE, EXPANDING)
+    bundle B = moving_stats(y, "mean", WSIZE, EXPANDING)
     matrix actual_values = B.result
     matrix actual_obsnum = B.obsnum
     strings actual_date = rnameget(actual_values)
@@ -122,7 +122,7 @@ test_rolling_expanding_window(casual)
 nulldata 10
 setobs 1 1 --time-series
 series y = normal()
-bundle B = rolling(y, "mean", 2)
+bundle B = moving_stats(y, "mean", 2)
 matrix actual_values = B.result
 strings actual_date = rnameget(actual_values)
 
@@ -135,7 +135,7 @@ print y y_movmean -o
 # Example with observation labels
 open bikesharing.gdt --quiet
 smpl time <= 10 --restrict --permanent
-bundle B = rolling(casual, "mean", 2)
+bundle B = moving_stats(casual, "mean", 2)
 matrix actual_values = B.result
 strings actual_date = rnameget(actual_values)
 
@@ -156,7 +156,7 @@ end function
 
 scalar EXPANDING = TRUE
 scalar WSIZE = 10                # set window length
-bundle B = rolling(LRM, "my_AR1", WSIZE, EXPANDING)
+bundle B = moving_stats(LRM, "my_AR1", WSIZE, EXPANDING)
 
 # Vector to series
 smpl B.obsnum[1] B.obsnum[end]  # select relevant sample

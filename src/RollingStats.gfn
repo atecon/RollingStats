@@ -3,7 +3,7 @@
 <gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2021c">
 <author email="atecon@posteo.de">Artur Tarassow</author>
 <version>1.0</version>
-<date>2023-02-01</date>
+<date>2023-02-02</date>
 <description>Compute moving-window statistics</description>
 <tags>C10</tags>
 <label>Moving time-series statistics</label>
@@ -21,32 +21,35 @@ https://github.com/atecon/RollingStats
 Public functions
 =================
 
-rolling (const series y, const string operation, int wsize[1::2],
-				 bool expanding[FALSE])
+moving_stats (const series y, const string operation, const int wsize[1::2],
+              const bool expanding[FALSE])
 -------------------------------------------------------------------
 This function computes some requested statistics in either a 'rolling'
 (fixed, shifting window through time) or expanding window through time manner.
 
 Input:
 ------
-y:             			series, Target for which to compute statistics
-operation:				  string, Name of the function to call
-wsize:              int, Length of the window (optional, default = 2)
-expanding:          bool, 0(=FALSE): rolling-window (default),
-										1 (=TRUE): expanding window
+y:           series, Target for which to compute the statistics
+operation:   string, Name of the function to call
+wsize:       int, Fixed number of observations used for each window
+             (optional, default = 2)
+expanding:   bool, Window function where 0(=FALSE) refers to a
+             rolling-window (default) and 1 (=TRUE) to an expanding window
 
 Return:
-Bundle holding the following objects:
-  result:		Either a matrix or a matrix array. Both are of length R where R
-  					refers to the number of windows. The returned matrix may have k
-  					columns if the the requested operation returns a vector of length
-  					k.
-  obsnum:		Column vector holding the observation identifiers for each window
-  					considered. Each value refers to the last observation used for
-  					computation.
-  date:			String array holding the observation label for each window
-  					considered. Each value refers to the last observation date used for
-  					computation.
+Bundle holding the following objects (among the input parameters):
+  date:   String array holding the observation label for each window
+          considered. Each value refers to the last observation date used for
+          computation.
+  nsteps: Number of windows used for estimation.
+  obsnum: Column vector holding the observation identifiers for each window
+          considered. Each value refers to the last observation used for
+          computation.
+  result: Either a matrix or a matrix array. Both are of length R where R
+          refers to the number of windows used for estimation. The returned
+          matrix may have k columns if the the requested operation returns a
+          vector of length k.
+  T:      Number of observations of the underlying sample
 
 
 Changelog
@@ -76,7 +79,7 @@ Changelog
 0.1: Nov., 2018
 + initial public version
 </help>
-<gretl-function name="rolling" type="bundle">
+<gretl-function name="moving_stats" type="bundle">
  <params count="4">
   <param name="y" type="series" const="true">
 <description>Target series</description>
@@ -84,7 +87,7 @@ Changelog
   <param name="operation" type="string" const="true">
 <description>Function to call</description>
   </param>
-  <param name="wsize" type="int" min="1" default="2">
+  <param name="wsize" type="int" min="1" default="2" const="true">
 <description>Length of the window</description>
   </param>
   <param name="expanding" type="bool" default="0">
@@ -92,14 +95,14 @@ Changelog
   </param>
  </params>
 <code>/* Public function for computing moving statistics. */
-bundle self = _(T = $nobs, error = FALSE, operation, wsize, expanding)
+bundle self = _(T = $nobs, operation, wsize, expanding)
 data_has_missings(y)
 self.nsteps = get_nsteps(self.wsize)
 compute_moving_stats(y, &amp;self)
 return self
 </code>
 </gretl-function>
-<gretl-function name="rolling_gui" type="series" menu-only="1" pkg-role="gui-main">
+<gretl-function name="moving_stats_gui" type="series" menu-only="1" pkg-role="gui-main">
  <params count="4">
   <param name="y" type="series" const="true">
 <description>Target series</description>
@@ -110,12 +113,12 @@ return self
   <param name="wsize" type="int" min="1" default="2">
 <description>Window length</description>
   </param>
-  <param name="expanding" type="bool" default="0">
+  <param name="expanding" type="bool" default="0" const="true">
 <description>Expanding window?</description>
   </param>
  </params>
 <code>/* GUI related function calling actual public function. */
-bundle B = rolling(y, operation, wsize, expanding)
+bundle B = moving_stats(y, operation, wsize, expanding)
 smpl B.obsnum[1] B.obsnum[end]
 series ret = B.result
 print &quot;Series successfully computed.&quot;
@@ -135,7 +138,7 @@ return ret
 scalar has_missings = sum(missing(y))
 if has_missings
   print &quot;ERROR: series has missing values. Remove first.&quot;
-  funcerr &quot;Try the command 'smpl &lt;NAME_OF_SERIES&gt; --contiguous' before calling rolling().&quot;
+  funcerr &quot;Try the command 'smpl &lt;NAME_OF_SERIES&gt; --contiguous' before calling moving_stats().&quot;
 endif
 </code>
 </gretl-function>
@@ -203,12 +206,12 @@ open denmark.gdt -q		# load some time-series dataset
 RUN_EXAMPLE = 1
 
 
-if RUN_EXAMPLE == 1  # rolling-window case
+if RUN_EXAMPLE == 1  # moving_stats-window case
     series input = diff(LRM)
     smpl input --contiguous    # avoid missing values
 
     scalar WSIZE = 22                # set window length
-    bundle B = rolling(input, &quot;mean&quot;, WSIZE)
+    bundle B = moving_stats(input, &quot;mean&quot;, WSIZE)
     print B
 
     # Vector to series
@@ -222,7 +225,7 @@ elif RUN_EXAMPLE == 2  # expanding window
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 5                # set window length
-    bundle B = rolling(input, &quot;mean&quot;, WSIZE, EXPANDING)
+    bundle B = moving_stats(input, &quot;mean&quot;, WSIZE, EXPANDING)
     print B
 
     # Vector to series
@@ -232,7 +235,7 @@ elif RUN_EXAMPLE == 2  # expanding window
 
 elif RUN_EXAMPLE == 3
     # Call your own user-defined function which returns a scalar value
-    # AR(1)-coefficient over time (w.o. intercept in the regression)
+    # of the AR(1)-coefficient over time (w.o. intercept in the regression)
     function scalar my_AR1 (const series y)
         ols y const y(-1) --quiet
         return $coeff[2]	# return AR(1) coefficient only
@@ -240,7 +243,7 @@ elif RUN_EXAMPLE == 3
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 10                # set window length
-    bundle B = rolling(LRM, &quot;my_AR1&quot;, WSIZE, EXPANDING)
+    bundle B = moving_stats(LRM, &quot;my_AR1&quot;, WSIZE, EXPANDING)
 
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
@@ -249,7 +252,7 @@ elif RUN_EXAMPLE == 3
 
 elif RUN_EXAMPLE == 4
     # Call your own user-defined function which returns a matrix
-    # Coefficients over time
+    # of coefficients over time
     function matrix my_AR1 (const series y)
         ols y const y(-1) --quiet
         return $coeff
@@ -257,7 +260,7 @@ elif RUN_EXAMPLE == 4
 
     scalar EXPANDING = TRUE
     scalar WSIZE = 10                # set window length
-    bundle B = rolling(LRM, &quot;my_AR1&quot;, WSIZE, EXPANDING)
+    bundle B = moving_stats(LRM, &quot;my_AR1&quot;, WSIZE, EXPANDING)
 
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
