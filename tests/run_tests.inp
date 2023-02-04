@@ -118,6 +118,36 @@ end function
 test_rolling_expanding_window(casual)
 
 
+## Series return type
+open bikesharing.gdt --quiet
+
+function void test_movstats (const series y)
+    print "Start testing function movstats() with moving window"
+
+    # Given
+    smpl time <= 3 --restrict
+    scalar WSIZE = 2
+    matrix expected_obsnum = {2, 3}
+    strings expected_date = defarray("2011-01-02", "2011-01-03")
+    series expected_values = {NA; 231; 125.5}
+
+    # When
+    series actual_values = movstats(y, "mean", WSIZE)
+
+    # Then
+    assert(nobs(actual_values) == sum(ok(expected_values)))
+    loop foreach i expected_values
+        if ok(expected_values[i])
+            assert(actual_values[i] == expected_values[i])
+        else
+            assert(ok(actual_values[i]) == ok(expected_values[i]))
+        endif
+    endloop
+end functioning
+test_movstats(casual)
+
+
+
 # Example without obslabels
 nulldata 10
 setobs 1 1 --time-series

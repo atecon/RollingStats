@@ -86,11 +86,12 @@ function bundle compute_moving_stats (const series y,
 end function
 
 
-function series moving_stats_gui (const series y "Target series",
-                             const string operation "Function name",
-                             int wsize[1::2] "Window length",
-                             const bool expanding[0] "Expanding window?")
-    /* GUI related function calling actual public function. */
+function series movstats (const series y "Target series",
+                          const string operation "Function name",
+                          int wsize[1::2] "Window length",
+                          const bool expanding[0] "Expanding window?")
+    /* Wrapper returning series and also used for GUI access related
+        function calling actual public function. */
 
     bundle B = moving_stats(y, operation, wsize, expanding)
 

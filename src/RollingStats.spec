@@ -1,14 +1,13 @@
 author = Artur Tarassow
 email = atecon@posteo.de
 version = 1.0
-date = 2023-02-02
+date = 2023-02-04
 description = Compute moving-window statistics
 tags = C10
 min-version = 2021c
 data-requirement = needs-time-series-data
-public = moving_stats moving_stats_gui
-gui-main = moving_stats_gui
-menu-only = moving_stats_gui
+public = moving_stats movstats
+gui-main = movstats
 label = Moving time-series statistics
 menu-attachment = MAINWIN/Add
 help = RollingStats_help.txt

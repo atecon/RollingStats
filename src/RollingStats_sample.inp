@@ -6,8 +6,15 @@ open denmark.gdt -q		# load some time-series dataset
 
 RUN_EXAMPLE = 1
 
+if RUN_EXAMPLE == 1             # moving_stats-window case
+    series input = diff(LRM)
+    smpl input --contiguous     # avoid missing values
 
-if RUN_EXAMPLE == 1  # moving_stats-window case
+    scalar WSIZE = 22           # set window length
+    series y = movstats(input, "mean", WSIZE)
+    print input y -o
+
+elif RUN_EXAMPLE == 2  # moving_stats-window case
     series input = diff(LRM)
     smpl input --contiguous    # avoid missing values
 

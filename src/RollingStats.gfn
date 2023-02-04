@@ -3,7 +3,7 @@
 <gretl-function-package name="RollingStats" needs-time-series-data="true" minver="2021c">
 <author email="atecon@posteo.de">Artur Tarassow</author>
 <version>1.0</version>
-<date>2023-02-02</date>
+<date>2023-02-04</date>
 <description>Compute moving-window statistics</description>
 <tags>C10</tags>
 <label>Moving time-series statistics</label>
@@ -17,9 +17,35 @@ Alternatively, create an issue ticket on the github repo (see below).
 Source code and test script(s) can be found here:
 https://github.com/atecon/RollingStats
 
+GUI usage
+==========
+You can reach the GUI functionality via the menu entry
+&quot;Add -&gt; Moving time-series statistics&quot;.
+
 
 Public functions
 =================
+
+movstats (const series y, const string operation, const int wsize[1::2],
+          const bool expanding[FALSE])
+-------------------------------------------------------------------
+This function computes some requested statistics in either a 'rolling'
+(fixed, shifting window through time) or expanding window through time manner.
+
+Input:
+------
+y:           series, Target for which to compute the statistics
+operation:   string, Name of the function to call
+wsize:       int, Fixed number of observations used for each window
+             (optional, default = 2)
+expanding:   bool, Window function where 0(=FALSE) refers to a
+             rolling-window (default) and 1 (=TRUE) to an expanding window
+
+Return:
+Series of moving-window statistics.
+====================================================================
+
+
 
 moving_stats (const series y, const string operation, const int wsize[1::2],
               const bool expanding[FALSE])
@@ -50,6 +76,7 @@ Bundle holding the following objects (among the input parameters):
           matrix may have k columns if the the requested operation returns a
           vector of length k.
   T:      Number of observations of the underlying sample
+====================================================================
 
 
 Changelog
@@ -102,7 +129,7 @@ compute_moving_stats(y, &amp;self)
 return self
 </code>
 </gretl-function>
-<gretl-function name="moving_stats_gui" type="series" menu-only="1" pkg-role="gui-main">
+<gretl-function name="movstats" type="series" pkg-role="gui-main">
  <params count="4">
   <param name="y" type="series" const="true">
 <description>Target series</description>
@@ -117,17 +144,18 @@ return self
 <description>Expanding window?</description>
   </param>
  </params>
-<code>/* GUI related function calling actual public function. */
-bundle B = moving_stats(y, operation, wsize, expanding)
-smpl B.obsnum[1] B.obsnum[end]
-series ret = B.result
-print &quot;Series successfully computed.&quot;
-smpl full
-string wtype = expanding == TRUE ? &quot;Expanding&quot; : &quot;Rolling&quot;
-string desc = sprintf(&quot;%s %s (length = %d) of %s&quot;, wtype, operation, wsize, argname(y))
-setinfo ret --description=&quot;@desc&quot;
-setinfo ret --graph-name=&quot;@desc&quot;
-return ret
+<code>/* Wrapper returning series and also used for GUI access related
+function calling actual public function. */
+  bundle B = moving_stats(y, operation, wsize, expanding)
+  smpl B.obsnum[1] B.obsnum[end]
+  series ret = B.result
+  print &quot;Series successfully computed.&quot;
+  smpl full
+  string wtype = expanding == TRUE ? &quot;Expanding&quot; : &quot;Rolling&quot;
+  string desc = sprintf(&quot;%s %s (length = %d) of %s&quot;, wtype, operation, wsize, argname(y))
+  setinfo ret --description=&quot;@desc&quot;
+  setinfo ret --graph-name=&quot;@desc&quot;
+  return ret
 </code>
 </gretl-function>
 <gretl-function name="data_has_missings" type="void" private="1">
@@ -205,8 +233,15 @@ open denmark.gdt -q		# load some time-series dataset
 
 RUN_EXAMPLE = 1
 
+if RUN_EXAMPLE == 1             # moving_stats-window case
+    series input = diff(LRM)
+    smpl input --contiguous     # avoid missing values
 
-if RUN_EXAMPLE == 1  # moving_stats-window case
+    scalar WSIZE = 22           # set window length
+    series y = movstats(input, &quot;mean&quot;, WSIZE)
+    print input y -o
+
+elif RUN_EXAMPLE == 2  # moving_stats-window case
     series input = diff(LRM)
     smpl input --contiguous    # avoid missing values
 

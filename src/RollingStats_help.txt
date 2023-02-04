@@ -6,9 +6,35 @@ Alternatively, create an issue ticket on the github repo (see below).
 Source code and test script(s) can be found here:
 https://github.com/atecon/RollingStats
 
+GUI usage
+==========
+You can reach the GUI functionality via the menu entry
+"Add -> Moving time-series statistics".
+
 
 Public functions
 =================
+
+movstats (const series y, const string operation, const int wsize[1::2],
+          const bool expanding[FALSE])
+-------------------------------------------------------------------
+This function computes some requested statistics in either a 'rolling'
+(fixed, shifting window through time) or expanding window through time manner.
+
+Input:
+------
+y:           series, Target for which to compute the statistics
+operation:   string, Name of the function to call
+wsize:       int, Fixed number of observations used for each window
+             (optional, default = 2)
+expanding:   bool, Window function where 0(=FALSE) refers to a
+             rolling-window (default) and 1 (=TRUE) to an expanding window
+
+Return:
+Series of moving-window statistics.
+====================================================================
+
+
 
 moving_stats (const series y, const string operation, const int wsize[1::2],
               const bool expanding[FALSE])
@@ -39,6 +65,7 @@ Bundle holding the following objects (among the input parameters):
           matrix may have k columns if the the requested operation returns a
           vector of length k.
   T:      Number of observations of the underlying sample
+====================================================================
 
 
 Changelog
