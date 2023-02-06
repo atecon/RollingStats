@@ -5,4 +5,4 @@
 
 **Gretl** package URL: http://ricardo.ecn.wfu.edu/gretl/cgi-bin/current_fnfiles/RollingStats.gfn
 
-** Doc** https://github.com/atecon/RollingStats/blob/master/src/RollingStats_help.txt
+**Doc** https://github.com/atecon/RollingStats/blob/master/src/RollingStats_help.txt
