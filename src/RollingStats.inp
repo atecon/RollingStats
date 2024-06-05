@@ -36,7 +36,8 @@ function bundle compute_moving_stats (const series y,
                                       bundle *self)
     /*  Actual computation is done here. */
 
-    smpl $t1 ($t1 + self.wsize - 1)
+    scalar last_obs = $t1 + self.wsize - 1
+    smpl $t1 last_obs
     strings self.date = array(self.nsteps)
     matrix self.obsnum = mshape(NA, self.nsteps)
 
