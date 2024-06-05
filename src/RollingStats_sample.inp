@@ -11,7 +11,7 @@ if RUN_EXAMPLE == 1             # moving_stats-window case
     smpl input --contiguous     # avoid missing values
 
     scalar WSIZE = 22           # set window length
-    series y = movstats(input, "mean", WSIZE)
+    series y = moving_stats(input, "mean", WSIZE)
     print input y -o
 
 elif RUN_EXAMPLE == 2  # moving_stats-window case
