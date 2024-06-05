@@ -2,11 +2,7 @@ function void data_has_missings (const series y)
     /* Check for missing values. */
 
     scalar has_missings = sum(missing(y))
-
-    if has_missings
-        print "ERROR: series has missing values. Remove first."
-        funcerr "Try the command 'smpl <NAME_OF_SERIES> --contiguous' before calling moving_stats()."
-    endif
+    errorif(has_missings != FALSE, "ERROR: series has missing values. Remove first.")
 end function
 
 

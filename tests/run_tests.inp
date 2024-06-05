@@ -11,8 +11,8 @@ series y_wmiss = normal()
 series y_wmiss[2] = NA
 
 bundles Params = null
-Params = Params + _(y = y, expected = FALSE)
-Params = Params + _(y = y_wmiss, expected = 47)
+Params = Params + _(y = y, expected_error = FALSE)
+Params = Params + _(y = y_wmiss, expected_error = TRUE)
 
 function void test_data_has_missings (const bundles P, list L)
     print "Start testing function data_has_missings()."
@@ -26,7 +26,11 @@ function void test_data_has_missings (const bundles P, list L)
         scalar actual = $error
 
         # Then
-        assert(actual == P[i].expected)
+        if P[i].expected_error
+            assert(actual != FALSE)
+        else
+            assert(actual == P[i].expected_error)
+        endif
     endloop
 end function
 test_data_has_missings(Params, dataset)
@@ -34,9 +38,9 @@ test_data_has_missings(Params, dataset)
 
 nulldata 3
 bundles Params = null
-Params = Params + _(wsize = $nobs, expected = 1)
-Params = Params + _(wsize = ($nobs - 1), expected = 2)
-Params = Params + _(wsize = ($nobs + 1), expected = 47)
+Params = Params + _(wsize = $nobs, expected_error = 1)
+Params = Params + _(wsize = ($nobs - 1), expected_error = 2)
+Params = Params + _(wsize = ($nobs + 1), expected_error = 47)
 
 function void test_get_nsteps (const bundles P)
     print "Start testing function get_nsteps()."
@@ -44,13 +48,12 @@ function void test_get_nsteps (const bundles P)
     loop foreach i P
         # Given + When
         catch scalar actual = get_nsteps(P[i].wsize)
-        error = $error
 
         # Then
-        if !error
-            assert(actual == P[i].expected)
+        if P[i].expected_error
+            assert(actual != FALSE)
         else
-            assert(error == P[i].expected)
+            assert(actual == P[i].expected_error)
         endif
     endloop
 end function
