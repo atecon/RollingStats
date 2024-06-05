@@ -88,14 +88,13 @@ function series movstats (const series y "Target series",
                           int wsize[1::2] "Window length",
                           const bool expanding[0] "Expanding window?")
     /* Wrapper returning series and also used for GUI access related
-        function calling actual public function. */
+      function calling actual public function. */
 
     bundle B = moving_stats(y, operation, wsize, expanding)
 
     smpl B.obsnum[1] B.obsnum[end]
     series ret = B.result
     print "Series successfully computed."
-    smpl full
 
     string wtype = expanding == TRUE ? "Expanding" : "Rolling"
     string desc = sprintf("%s %s (length = %d) of %s",
