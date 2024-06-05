@@ -196,5 +196,24 @@ smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
 series bhat = B.result
 
 
+# Call user-defined function computing bivariate correlation over time
+function scalar correlation (const list L)
+    corr L --quiet
+    return $result[1,2]
+end function
+
+scalar EXPANDING = FALSE
+scalar WSIZE = 16                # set window length
+list L = diff(LRM) diff(LRY)
+smpl L --contiguous
+bundle B = moving_stats(L, "correlation", WSIZE, EXPANDING)
+series correl2 = movstats(L, "correlation", WSIZE, EXPANDING)
+
+# Vector to series
+smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
+series correl = B.result[,1]
+assert(sum(correl - correl2) == 0)
+
+
 
 printf "\nInfo: All tests passed.\n"
