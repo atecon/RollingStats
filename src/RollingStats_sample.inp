@@ -2,7 +2,7 @@ clear
 set verbose off
 
 include RollingStats.gfn
-open denmark.gdt -q		# load some time-series dataset
+open denmark.gdt -q
 
 RUN_EXAMPLE = 1
 
@@ -12,7 +12,7 @@ if RUN_EXAMPLE == 1             # moving_stats-window case
 
     scalar WSIZE = 22           # set window length
     series y = movstats(input, "mean", WSIZE)
-    print input y -o
+    print input y -o --range=1:10
 
 elif RUN_EXAMPLE == 2  # moving_stats-window case
     series input = diff(LRM)
@@ -75,4 +75,20 @@ elif RUN_EXAMPLE == 4
     series bconst = B.result[,1]
     series bar1 = B.result[,2]
     gnuplot bconst bar1 --with-lines --time-series --output=display
+
+elif RUN_EXAMPLE == 5
+
+    # Call user-defined function computing bivariate correlation over time
+    function scalar correlation (const list L)
+        corr L --quiet
+        return $result[1,2]
+    end function
+
+    scalar EXPANDING = FALSE
+    scalar WSIZE = 16                # set window length
+    list L = diff(LRM) diff(LRY)
+    smpl L --no-missing
+    series correl = movstats(L, "correlation", WSIZE, EXPANDING)
+    gnuplot correl --with-lines --time-series --output=display \
+        { set title "Bivariate correlation";}
 endif
