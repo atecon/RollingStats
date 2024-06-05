@@ -1,4 +1,4 @@
-function void data_has_missings (const series y)
+function void data_has_missings (const numeric y)
     /* Check for missing values. */
 
     scalar has_missings = sum(missing(y))
@@ -16,11 +16,14 @@ function scalar get_nsteps (const int wsize)
 end function
 
 
-function bundle moving_stats (const series y "Target series",
+function bundle moving_stats (const numeric y,
                               const string operation "Function to call",
                               const int wsize[1::2] "Length of the window",
                               bool expanding[FALSE] "Do expanding window")
     /* Public function for computing moving statistics. */
+
+    errorif(typename(y) != "series" && typename(y) != "list",
+            "Target series must be either of type 'series' or 'list'.")
 
     bundle self = _(T = $nobs, operation, wsize, expanding)
     data_has_missings(y)
@@ -32,7 +35,7 @@ function bundle moving_stats (const series y "Target series",
 end function
 
 
-function bundle compute_moving_stats (const series y,
+function bundle compute_moving_stats (const numeric y,
                                       bundle *self)
     /*  Actual computation is done here. */
 
@@ -83,7 +86,7 @@ function bundle compute_moving_stats (const series y,
 end function
 
 
-function series movstats (const series y "Target series",
+function series movstats (const numeric y,
                           const string operation "Function name",
                           int wsize[1::2] "Window length",
                           const bool expanding[0] "Expanding window?")
