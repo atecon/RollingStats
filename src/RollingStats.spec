@@ -1,7 +1,7 @@
 author = Artur Tarassow
 email = atecon@posteo.de
 version = 1.1
-date = 2024-06-05
+date = 2024-06-06
 description = Compute moving-window statistics
 tags = C10
 min-version = 2023b
