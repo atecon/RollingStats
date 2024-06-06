@@ -12,7 +12,7 @@ if RUN_EXAMPLE == 1             # moving_stats-window case
 
     scalar WSIZE = 22           # set window length
     series y = movstats(input, "mean", WSIZE)
-    print input y -o --range=1:10
+    print input y --byobs --range=1:10
 
 elif RUN_EXAMPLE == 2  # moving_stats-window case
     series input = diff(LRM)
@@ -25,7 +25,7 @@ elif RUN_EXAMPLE == 2  # moving_stats-window case
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
     series y = B.result
-    print input y -o
+    print input y --byobs
 
 elif RUN_EXAMPLE == 2  # expanding window
     series input = diff(LRM)
@@ -39,7 +39,7 @@ elif RUN_EXAMPLE == 2  # expanding window
     # Vector to series
     smpl B.obsnum[1] B.obsnum[end]  # select relevant sample
     series y = B.result
-    print input y -o
+    print input y --byobs
 
 elif RUN_EXAMPLE == 3
     # Call your own user-defined function which returns a scalar value
