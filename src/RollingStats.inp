@@ -97,7 +97,6 @@ function series movstats (const numeric y,
 
     smpl B.obsnum[1] B.obsnum[end]
     series ret = B.result
-    print "Series successfully computed."
 
     string wtype = expanding == TRUE ? "Expanding" : "Rolling"
     string desc = sprintf("%s %s (length = %d) of %s",
